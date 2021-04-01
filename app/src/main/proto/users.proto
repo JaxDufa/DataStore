@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+option java_package = "com.example.datastore";
+option java_multiple_files = true;
+
+//import "../proto/user.proto";
+
+message UsersPreferences {
+  message User {
+    string name = 1;
+    string nick_name = 2;
+    int32 age = 3;
+
+    enum Profession {
+      UNSPECIFIED = 0;
+      YOUTUBER = 1;
+      GAMER = 2;
+      DAY_TRADER = 3;
+      COACH = 4;
+      INFLUENCER = 5;
+      OTHER = 6;
+    }
+    Profession profession = 4;
+  }
+  repeated User users = 1;
+}
+
