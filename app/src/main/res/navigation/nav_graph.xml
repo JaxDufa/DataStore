@@ -3,26 +3,49 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/FirstFragment">
+    app:startDestination="@id/addUserFragment">
 
     <fragment
-        android:id="@+id/FirstFragment"
-        android:name="com.example.datastore.adduser.FirstFragment"
-        android:label="@string/first_fragment_label"
-        tools:layout="@layout/fragment_first">
+        android:id="@+id/addUserFragment"
+        android:name="com.example.datastore.user.add.AddUserFragment"
+        android:label="AddUserFragment"
+        tools:layout="@layout/fragment_add_user">
 
         <action
-            android:id="@+id/action_FirstFragment_to_SecondFragment"
-            app:destination="@id/SecondFragment" />
+            android:id="@+id/action_toUserList"
+            app:destination="@id/userListFragment"
+            app:popUpTo="@id/addUserFragment"
+            app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_toUserDetails"
+            app:destination="@id/userDetailsFragment"
+            app:popUpTo="@id/addUserFragment"
+            app:popUpToInclusive="true" />
     </fragment>
+
     <fragment
-        android:id="@+id/SecondFragment"
-        android:name="com.example.datastore.listuser.SecondFragment"
-        android:label="@string/second_fragment_label"
-        tools:layout="@layout/fragment_second">
+        android:id="@+id/userListFragment"
+        android:name="com.example.datastore.user.list.UserListFragment"
+        android:label="UserListFragment"
+        tools:layout="@layout/fragment_user_list">
 
         <action
-            android:id="@+id/action_SecondFragment_to_FirstFragment"
-            app:destination="@id/FirstFragment" />
+            android:id="@+id/action_toAddUser"
+            app:destination="@id/addUserFragment" />
+
+        <action
+            android:id="@+id/action_toUserDetails"
+            app:destination="@id/userDetailsFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/userDetailsFragment"
+        android:name="com.example.datastore.user.edit.EditUserFragment"
+        android:label="UserDetailsFragment"
+        tools:layout="@layout/fragment_edit_user">
+
+        <action
+            android:id="@+id/action_toAddUser"
+            app:destination="@id/addUserFragment" />
     </fragment>
 </navigation>

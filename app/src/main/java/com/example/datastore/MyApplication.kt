@@ -13,15 +13,19 @@
 package com.example.datastore
 
 import android.app.Application
-import com.example.datastore.store.ExamplePreferencesDataStore
-import com.example.datastore.store.ExamplePreferencesDataStoreImpl
-import com.example.datastore.store.ExampleRxPreferencesDataStore
-import com.example.datastore.store.ExampleRxPreferencesDataStoreImpl
-import com.example.datastore.store.ExampleSharedPreferences
-import com.example.datastore.store.ExampleSharedPreferencesImpl
-import com.example.datastore.store.proto.ExampleProtoDataStore
-import com.example.datastore.store.proto.ExampleProtoDataStoreImpl
-import com.example.datastore.viewmodel.ExampleViewModel
+import com.example.datastore.store.UserPreferencesDataStore
+import com.example.datastore.store.UserPreferencesDataStoreImpl
+import com.example.datastore.store.UserRxPreferencesDataStore
+import com.example.datastore.store.UserRxPreferencesDataStoreImpl
+import com.example.datastore.store.UserSharedPreferences
+import com.example.datastore.store.UserSharedPreferencesImpl
+import com.example.datastore.store.proto.UserProtoPreferencesDataStore
+import com.example.datastore.store.proto.UserProtoPreferencesDataStoreImpl
+import com.example.datastore.store.proto.UsersProtoPreferencesDataStore
+import com.example.datastore.store.proto.UsersProtoPreferencesDataStoreImpl
+import com.example.datastore.user.add.AddUserViewModel
+import com.example.datastore.user.edit.EditUserViewModel
+import com.example.datastore.user.list.UserListViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.androidx.viewmodel.dsl.viewModel
@@ -31,15 +35,18 @@ import org.koin.dsl.module
 
 class MyApplication : Application() {
 
-    private val appModule =  module {
-        single<ExampleSharedPreferences> { ExampleSharedPreferencesImpl(androidContext()) }
-        single<ExampleRxPreferencesDataStore> { ExampleRxPreferencesDataStoreImpl(androidContext()) }
-        single<ExamplePreferencesDataStore> { ExamplePreferencesDataStoreImpl(androidContext()) }
-        single<ExampleProtoDataStore> { ExampleProtoDataStoreImpl(androidContext()) }
+    private val appModule = module {
+        single<UserSharedPreferences> { UserSharedPreferencesImpl(androidContext()) }
 
-        viewModel {
-            ExampleViewModel(get(), get(), get(), get())
-        }
+        single<UserRxPreferencesDataStore> { UserRxPreferencesDataStoreImpl(androidContext()) }
+        single<UserPreferencesDataStore> { UserPreferencesDataStoreImpl(androidContext()) }
+
+        single<UserProtoPreferencesDataStore> { UserProtoPreferencesDataStoreImpl(androidContext()) }
+        single<UsersProtoPreferencesDataStore> { UsersProtoPreferencesDataStoreImpl(androidContext()) }
+
+        viewModel { AddUserViewModel(get()) }
+        viewModel { EditUserViewModel(get(), get()) }
+        viewModel { UserListViewModel(get(), get(), get()) }
     }
 
     override fun onCreate() {

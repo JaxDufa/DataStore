@@ -13,73 +13,70 @@
 package com.example.datastore.store
 
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.core.content.edit
 
 const val USER_SHARED_PREFERENCES_NAME = "shared_prefs"
 const val USER_EXTRA_SHARED_PREFERENCES_NAME = "extra_shared_prefs"
 
-typealias StringListener = (newValue: String) -> Unit
-typealias IntListener = (newValue: Int) -> Unit
+typealias PreferencesListener = (key: String, newValue: Any) -> Unit
 
-interface ExampleSharedPreferences {
+interface UserSharedPreferences {
 
-    fun registerNameListener(onNameChanged: StringListener)
+    fun registerListener(onPreferencesChanged: PreferencesListener)
 
-    fun registerAgeListener(onAgeChanged: IntListener)
+    fun unregisterListener()
 
     fun readName(): String
 
     fun writeName(name: String)
 
-    fun writeNickName(nickName: String)
+    fun writeEmail(email: String)
 
-    fun writeAge(age: Int)
+    fun writeCode(code: Int)
 
     fun writeProfession(profession: Profession)
 
     fun clear()
 }
 
-class ExampleSharedPreferencesImpl(context: Context) : ExampleSharedPreferences {
+class UserSharedPreferencesImpl(context: Context) : UserSharedPreferences {
 
     private object Keys {
 
         const val NAME_KEY = "name"
-        const val NICK_NAME_KEY = "nick_name"
-        const val AGE_KEY = "age"
+        const val EMAIL_KEY = "email"
+        const val CODE_KEY = "code"
         const val PROFESSION_KEY = "profession"
     }
 
     private val sharedPreferences = context.getSharedPreferences(USER_SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE)
-    private val extraSharedPreferences = context.getSharedPreferences(USER_EXTRA_SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE)
 
-    private var onNameChanged: StringListener? = null
-    private var onAgeChanged: IntListener? = null
+    private var preferencesChangeListener: SharedPreferences.OnSharedPreferenceChangeListener? = null
 
-    init {
-        sharedPreferences.edit {
-            putString(Keys.NAME_KEY, "Sidarta")
-        }
-        extraSharedPreferences.edit {
-            putString(Keys.NICK_NAME_KEY, "Hacker 2000")
-            putInt(Keys.AGE_KEY, 100)
-        }
+//    init {
+//        sharedPreferences.edit {
+//            putString(Keys.NAME_KEY, "Sidarta")
+//        }
+//        extraSharedPreferences.edit {
+//            putString(Keys.NICK_NAME_KEY, "Hacker 2000")
+//            putInt(Keys.AGE_KEY, 100)
+//        }
+//    }
 
-        sharedPreferences.registerOnSharedPreferenceChangeListener { sharedPreferences, key ->
-            when (key) {
-                Keys.NAME_KEY -> onNameChanged?.invoke(sharedPreferences.getString(key, null).orEmpty())
-                Keys.AGE_KEY -> onAgeChanged?.invoke(sharedPreferences.getInt(key, 0))
+    override fun registerListener(onPreferencesChanged: PreferencesListener) {
+        preferencesChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { sharedPreferences, key ->
+            if (key == Keys.CODE_KEY) {
+                onPreferencesChanged(key, sharedPreferences.getInt(key, 0))
+            } else {
+                onPreferencesChanged(key, sharedPreferences.getString(key, "").orEmpty())
             }
         }
+        sharedPreferences.registerOnSharedPreferenceChangeListener(preferencesChangeListener)
     }
 
-    // region - Listener
-    override fun registerNameListener(onNameChanged: StringListener) {
-        this.onNameChanged = onNameChanged
-    }
-
-    override fun registerAgeListener(onAgeChanged: IntListener) {
-        this.onAgeChanged = onAgeChanged
+    override fun unregisterListener() {
+        sharedPreferences.unregisterOnSharedPreferenceChangeListener(preferencesChangeListener)
     }
     // endregion
 
@@ -96,15 +93,15 @@ class ExampleSharedPreferencesImpl(context: Context) : ExampleSharedPreferences 
         }
     }
 
-    override fun writeNickName(nickName: String) {
+    override fun writeEmail(email: String) {
         sharedPreferences.edit {
-            putString(Keys.NICK_NAME_KEY, nickName)
+            putString(Keys.EMAIL_KEY, email)
         }
     }
 
-    override fun writeAge(age: Int) {
+    override fun writeCode(code: Int) {
         sharedPreferences.edit {
-            putInt(Keys.AGE_KEY, age)
+            putInt(Keys.CODE_KEY, code)
         }
     }
 

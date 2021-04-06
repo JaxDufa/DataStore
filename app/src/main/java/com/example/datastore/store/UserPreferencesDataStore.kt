@@ -29,15 +29,15 @@ import java.io.IOException
 
 private const val DATA_STORE_NAME = "preferences_data_store"
 
-interface ExamplePreferencesDataStore {
+interface UserPreferencesDataStore {
 
     val userFlow: Flow<UserInfo>
 
     val nameFlow: Flow<String>
 
-    val nickNameFlow: Flow<String>
+    val emailNameFlow: Flow<String>
 
-    val ageFlow: Flow<Int>
+    val codeFlow: Flow<Int>
 
     val professionFlow: Flow<Profession>
 
@@ -53,22 +53,24 @@ interface ExamplePreferencesDataStore {
 
     suspend fun writeName(name: String)
 
-    suspend fun writeNickName(nickName: String)
+    suspend fun writeEmail(email: String)
 
-    suspend fun writeAge(age: Int)
+    suspend fun writeCode(code: Int)
 
     suspend fun writeProfession(profession: Profession)
+
+    suspend fun hasData(): Boolean
 
     suspend fun clear()
 }
 
-class ExamplePreferencesDataStoreImpl(private val context: Context) : ExamplePreferencesDataStore {
+class UserPreferencesDataStoreImpl(private val context: Context) : UserPreferencesDataStore {
 
     private object Keys {
 
         val NAME_KEY = stringPreferencesKey("name")
-        val NICK_NAME_KEY = stringPreferencesKey("nick_name")
-        val AGE_KEY = intPreferencesKey("age")
+        val EMAIL_KEY = stringPreferencesKey("email")
+        val CODE_KEY = intPreferencesKey("code")
         val PROFESSION_KEY = stringPreferencesKey("profession")
     }
 
@@ -82,16 +84,18 @@ class ExamplePreferencesDataStoreImpl(private val context: Context) : ExamplePre
         }
     )
 
+    private val Context.safeData: Flow<Preferences>
+        get() = dataStore.data.handleException()
+
     // region - Flow
     override val userFlow: Flow<UserInfo>
         get() {
-            return context.dataStore.data
-                .handleException()
+            return context.safeData
                 .map { preferences ->
                     UserInfo(
                         name = preferences[Keys.NAME_KEY].orEmpty(),
-                        nickName = preferences[Keys.NICK_NAME_KEY].orEmpty(),
-                        age = preferences[Keys.AGE_KEY] ?: 0,
+                        email = preferences[Keys.EMAIL_KEY].orEmpty(),
+                        code = preferences[Keys.CODE_KEY] ?: 0,
                         profession = preferences[Keys.PROFESSION_KEY]?.let { Profession.valueOf(it) } ?: Profession.OTHER
                     )
                 }
@@ -99,35 +103,31 @@ class ExamplePreferencesDataStoreImpl(private val context: Context) : ExamplePre
 
     override val nameFlow: Flow<String>
         get() {
-            return context.dataStore.data
-                .handleException()
+            return context.safeData
                 .map { preferences ->
                     preferences[Keys.NAME_KEY].orEmpty()
                 }
         }
 
-    override val nickNameFlow: Flow<String>
+    override val emailNameFlow: Flow<String>
         get() {
-            return context.dataStore.data
-                .handleException()
+            return context.safeData
                 .map { preferences ->
-                    preferences[Keys.NICK_NAME_KEY].orEmpty()
+                    preferences[Keys.EMAIL_KEY].orEmpty()
                 }
         }
 
-    override val ageFlow: Flow<Int>
+    override val codeFlow: Flow<Int>
         get() {
-            return context.dataStore.data
-                .handleException()
+            return context.safeData
                 .map { preferences ->
-                    preferences[Keys.AGE_KEY] ?: 0
+                    preferences[Keys.CODE_KEY] ?: 0
                 }
         }
 
     override val professionFlow: Flow<Profession>
         get() {
-            return context.dataStore.data
-                .handleException()
+            return context.safeData
                 .map { preferences ->
                     preferences[Keys.PROFESSION_KEY]?.let { Profession.valueOf(it) } ?: Profession.OTHER
                 }
@@ -144,11 +144,11 @@ class ExamplePreferencesDataStoreImpl(private val context: Context) : ExamplePre
     }
 
     override suspend fun readNickName(): String {
-        return nickNameFlow.first()
+        return emailNameFlow.first()
     }
 
     override suspend fun readAge(): Int {
-        return ageFlow.first()
+        return codeFlow.first()
     }
 
     override suspend fun readProfession(): Profession {
@@ -163,15 +163,15 @@ class ExamplePreferencesDataStoreImpl(private val context: Context) : ExamplePre
         }
     }
 
-    override suspend fun writeNickName(nickName: String) {
+    override suspend fun writeEmail(email: String) {
         context.dataStore.edit { preferences ->
-            preferences[Keys.NICK_NAME_KEY] = nickName
+            preferences[Keys.EMAIL_KEY] = email
         }
     }
 
-    override suspend fun writeAge(age: Int) {
+    override suspend fun writeCode(code: Int) {
         context.dataStore.edit { preferences ->
-            preferences[Keys.AGE_KEY] = age
+            preferences[Keys.CODE_KEY] = code
         }
     }
 
@@ -182,7 +182,13 @@ class ExamplePreferencesDataStoreImpl(private val context: Context) : ExamplePre
     }
     // endregion
 
-    // region - Clear
+    override suspend fun hasData(): Boolean {
+        return context.dataStore.data
+            .handleException()
+            .map { it.asMap().isEmpty() }
+            .first()
+    }
+
     override suspend fun clear() {
         context.dataStore.edit { preferences ->
             preferences.clear()

@@ -12,8 +12,14 @@
 
 package com.example.datastore.store
 
-data class UserInfo(val name: String, val nickName:String, val age: Int, val profession: Profession)
+import java.util.Locale
+
+data class UserInfo(val name: String, val email: String, val code: Int, val profession: Profession)
 
 enum class Profession {
-    YOUTUBER, GAMER, DAY_TRADER, COACH, INFLUENCER, OTHER
+    DEVELOPER, ENGINEER, HITMAN, MEDIC, WRITER, OTHER;
+
+    override fun toString(): String {
+        return name.toLowerCase(Locale.getDefault()).capitalize(Locale.getDefault())
+    }
 }

@@ -28,7 +28,7 @@ import java.io.IOException
 
 private const val DATA_STORE_NAME = "rx_preferences_data_store"
 
-interface ExampleRxPreferencesDataStore {
+interface UserRxPreferencesDataStore {
 
     val userObservable: Flowable<UserInfo>
 
@@ -38,7 +38,7 @@ interface ExampleRxPreferencesDataStore {
 
     val ageObservable: Flowable<Int>
 
-    val emailObservable: Flowable<String>
+    val professionObservable: Flowable<Profession>
 
     fun readUser(): Single<UserInfo>
 
@@ -48,24 +48,28 @@ interface ExampleRxPreferencesDataStore {
 
     fun readAge(): Single<Int>
 
-    fun readEmail(): Single<String>
+    fun readProfession(): Single<Profession>
 
     fun writeName(name: String): Completable
 
+    fun writeNickName(nickName: String): Completable
+
     fun writeAge(age: Int): Completable
+
+    fun writeProfession(profession: Profession): Completable
 
     fun clear(): Completable
 }
 
 @ExperimentalCoroutinesApi
-class ExampleRxPreferencesDataStoreImpl(private val context: Context) : ExampleRxPreferencesDataStore {
+class UserRxPreferencesDataStoreImpl(private val context: Context) : UserRxPreferencesDataStore {
 
     private object Keys {
 
         val NAME_KEY = stringPreferencesKey("name")
-        val NICK_NAME_KEY = stringPreferencesKey("nick_name")
-        val AGE_KEY = intPreferencesKey("age")
         val EMAIL_KEY = stringPreferencesKey("email")
+        val CODE_KEY = intPreferencesKey("code")
+        val PROFESSION_KEY = stringPreferencesKey("profession")
     }
 
     private val Context.dataStore: RxDataStore<Preferences> by rxPreferencesDataStore(
@@ -78,24 +82,27 @@ class ExampleRxPreferencesDataStoreImpl(private val context: Context) : ExampleR
         }
     )
 
+    private val Context.safeData: Flowable<Preferences>
+        get() = dataStore.data().handleException()
+
     // region - Observable
     override val userObservable: Flowable<UserInfo>
         get() {
-            return context.dataStore.data()
-                .handleException()
+            return context.safeData
                 .map { preferences ->
                     UserInfo(
                         name = preferences[Keys.NAME_KEY].orEmpty(),
-                        nickName = preferences[Keys.NICK_NAME_KEY].orEmpty(),
-                        age = preferences[Keys.AGE_KEY] ?: 0,
-                        profession = Profession.OTHER
+                        email = preferences[Keys.EMAIL_KEY].orEmpty(),
+                        code = preferences[Keys.CODE_KEY] ?: 0,
+                        profession = preferences[Keys.PROFESSION_KEY]?.let {
+                            Profession.valueOf(it)
+                        } ?: Profession.OTHER
                     )
                 }
         }
     override val nameObservable: Flowable<String>
         get() {
-            return context.dataStore.data()
-                .handleException()
+            return context.safeData
                 .map { preferences ->
                     preferences[Keys.NAME_KEY].orEmpty()
                 }
@@ -103,28 +110,27 @@ class ExampleRxPreferencesDataStoreImpl(private val context: Context) : ExampleR
 
     override val nickNameObservable: Flowable<String>
         get() {
-            return context.dataStore.data()
-                .handleException()
+            return context.safeData
                 .map { preferences ->
-                    preferences[Keys.NICK_NAME_KEY].orEmpty()
+                    preferences[Keys.EMAIL_KEY].orEmpty()
                 }
         }
 
     override val ageObservable: Flowable<Int>
         get() {
-            return context.dataStore.data()
-                .handleException()
+            return context.safeData
                 .map { preferences ->
-                    preferences[Keys.AGE_KEY] ?: 0
+                    preferences[Keys.CODE_KEY] ?: 0
                 }
         }
 
-    override val emailObservable: Flowable<String>
+    override val professionObservable: Flowable<Profession>
         get() {
-            return context.dataStore.data()
-                .handleException()
+            return context.safeData
                 .map { preferences ->
-                    preferences[Keys.EMAIL_KEY].orEmpty()
+                    preferences[Keys.PROFESSION_KEY]?.let {
+                        Profession.valueOf(it)
+                    } ?: Profession.OTHER
                 }
         }
     // endregion
@@ -146,8 +152,8 @@ class ExampleRxPreferencesDataStoreImpl(private val context: Context) : ExampleR
         return ageObservable.firstOrError()
     }
 
-    override fun readEmail(): Single<String> {
-        return emailObservable.firstOrError()
+    override fun readProfession(): Single<Profession> {
+        return professionObservable.firstOrError()
     }
     // endregion
 
@@ -160,10 +166,26 @@ class ExampleRxPreferencesDataStoreImpl(private val context: Context) : ExampleR
         }.ignoreElement()
     }
 
+    override fun writeNickName(nickName: String): Completable {
+        return context.dataStore.updateDataAsync {
+            val mutablePreferences = it.toMutablePreferences()
+            mutablePreferences[Keys.EMAIL_KEY] = nickName
+            Single.just(mutablePreferences)
+        }.ignoreElement()
+    }
+
     override fun writeAge(age: Int): Completable {
         return context.dataStore.updateDataAsync {
             val mutablePreferences = it.toMutablePreferences()
-            mutablePreferences[Keys.AGE_KEY] = age
+            mutablePreferences[Keys.CODE_KEY] = age
+            Single.just(mutablePreferences)
+        }.ignoreElement()
+    }
+
+    override fun writeProfession(profession: Profession): Completable {
+        return context.dataStore.updateDataAsync {
+            val mutablePreferences = it.toMutablePreferences()
+            mutablePreferences[Keys.PROFESSION_KEY] = profession.name
             Single.just(mutablePreferences)
         }.ignoreElement()
     }
