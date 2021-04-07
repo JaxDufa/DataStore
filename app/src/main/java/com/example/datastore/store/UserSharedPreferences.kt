@@ -42,7 +42,7 @@ interface UserSharedPreferences {
 
 class UserSharedPreferencesImpl(context: Context) : UserSharedPreferences {
 
-    private object Keys {
+    object Keys {
 
         const val NAME_KEY = "name"
         const val EMAIL_KEY = "email"

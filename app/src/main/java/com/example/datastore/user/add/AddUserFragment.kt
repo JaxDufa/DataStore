@@ -53,7 +53,7 @@ class AddUserFragment : Fragment() {
                         val professionsAdapter = ArrayAdapter(requireContext(), R.layout.support_simple_spinner_dropdown_item, it.professionNames)
                         (inputTextProfession.editText as? AutoCompleteTextView)?.setAdapter(professionsAdapter)
                     }
-                    is AddUserViewModel.State.UserAdded -> findNavController().navigate(R.id.action_toUserDetails)
+                    is AddUserViewModel.State.Completed -> findNavController().navigate(R.id.action_toUserList)
                     else -> Unit
                 }
             }

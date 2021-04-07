@@ -48,6 +48,12 @@ class UserListViewModel(
                 _state.postValue(State.Started(listOf(it)))
             }
         }
+
+        viewModelScope.launch {
+            protoPreferencesDataStore.userFlow.collect {
+                Log.d("Update PPDS", "$it")
+            }
+        }
     }
 
     override fun onCleared() {

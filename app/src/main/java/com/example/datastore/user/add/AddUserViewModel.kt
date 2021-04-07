@@ -12,7 +12,6 @@
 
 package com.example.datastore.user.add
 
-import android.annotation.SuppressLint
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.example.datastore.store.Profession
@@ -20,18 +19,18 @@ import com.example.datastore.store.UserSharedPreferences
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.util.Locale
 
-@SuppressLint("CheckResult")
 class AddUserViewModel(
     private val sharedPreferences: UserSharedPreferences
+//    private val preferencesDataStore: UserPreferencesDataStore
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow<State>(State.Initial)
+    private val _state = MutableStateFlow<State>(State.Empty)
     val state: MutableStateFlow<State> get() = _state
 
     sealed class State {
-        object Initial : State()
+        object Empty : State()
         class Started(val professionNames: List<String>) : State()
-        object UserAdded : State()
+        object Completed : State()
     }
 
     init {
@@ -55,7 +54,7 @@ class AddUserViewModel(
                 writeCode(code.toInt())
                 writeProfession(Profession.valueOf(professionName.toUpperCase(Locale.getDefault())))
             }
-            _state.value = State.UserAdded
+            _state.value = State.Completed
         }
     }
 }

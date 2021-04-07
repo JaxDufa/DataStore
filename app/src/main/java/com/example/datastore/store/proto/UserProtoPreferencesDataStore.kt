@@ -19,19 +19,19 @@ import androidx.datastore.migrations.SharedPreferencesMigration
 import androidx.datastore.migrations.SharedPreferencesView
 import com.example.datastore.UserPreferences
 import com.example.datastore.store.Profession
+import com.example.datastore.store.USER_SHARED_PREFERENCES_NAME
 import com.example.datastore.store.UserInfo
+import com.example.datastore.store.UserSharedPreferencesImpl
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import java.io.IOException
 
 private const val DATA_STORE_FILE_NAME = "user_preferences.pb"
-private const val USER_PREFERENCES_MIGRATION_NAME = "preferences_data_store"
-private const val PROFESSION_MIGRATION_KEY = "profession"
 
 interface UserProtoPreferencesDataStore {
 
-    val userPreferencesFlow: Flow<UserInfo>
+    val userFlow: Flow<UserInfo>
 
     suspend fun updateName(name: String)
 
@@ -51,14 +51,19 @@ class UserProtoPreferencesDataStoreImpl(private val context: Context) : UserProt
             listOf(
                 SharedPreferencesMigration(
                     context,
-                    USER_PREFERENCES_MIGRATION_NAME
+                    USER_SHARED_PREFERENCES_NAME
                 ) { sharedPrefs: SharedPreferencesView, currentData: UserPreferences ->
                     if (currentData.profession == UserPreferences.Profession.UNSPECIFIED) {
-                        currentData.toBuilder().setProfession(
-                            UserPreferences.Profession.valueOf(
-                                sharedPrefs.getString(PROFESSION_MIGRATION_KEY, UserPreferences.Profession.OTHER.name)!!
-                            )
-                        ).build()
+                        val keys = UserSharedPreferencesImpl.Keys
+                        currentData.toBuilder()
+                            .setName(sharedPrefs.getString(keys.NAME_KEY))
+                            .setEmail(sharedPrefs.getString(keys.EMAIL_KEY))
+                            .setCode(sharedPrefs.getInt(keys.CODE_KEY, 0))
+                            .setProfession(
+                                UserPreferences.Profession.valueOf(
+                                    sharedPrefs.getString(keys.PROFESSION_KEY, UserPreferences.Profession.OTHER.name)!!
+                                )
+                            ).build()
                     } else {
                         currentData
                     }
@@ -67,14 +72,18 @@ class UserProtoPreferencesDataStoreImpl(private val context: Context) : UserProt
         }
     )
 
-    override val userPreferencesFlow: Flow<UserInfo> = context.dataStore.data
+    override val userFlow: Flow<UserInfo> = context.dataStore.data
         .handleException()
         .map {
             UserInfo(
                 name = it.name,
                 email = it.email,
                 code = it.code,
-                profession = Profession.valueOf(it.profession.name)
+                profession = if (it.profession == UserPreferences.Profession.UNSPECIFIED) {
+                    Profession.OTHER
+                } else {
+                    Profession.valueOf(it.profession.name)
+                }
             )
         }
 

@@ -182,6 +182,7 @@ class UserPreferencesDataStoreImpl(private val context: Context) : UserPreferenc
     }
     // endregion
 
+    // region - Others
     override suspend fun hasData(): Boolean {
         return context.dataStore.data
             .handleException()
