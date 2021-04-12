@@ -14,14 +14,17 @@ package com.example.datastore.user.add
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.datastore.store.Profession
-import com.example.datastore.store.UserSharedPreferences
+import com.example.datastore.store.UserInfo
+import com.example.datastore.store.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import java.util.Locale
 
 class AddUserViewModel(
-    private val sharedPreferences: UserSharedPreferences
-//    private val preferencesDataStore: UserPreferencesDataStore
+    private val userRepository: UserRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<State>(State.Empty)
@@ -33,28 +36,36 @@ class AddUserViewModel(
         object Completed : State()
     }
 
+    // TODO add index
+
     init {
-        sharedPreferences.registerListener { key, newValue ->
-            Log.d("Update SharedPrefs", "$key - $newValue")
+        viewModelScope.launch {
+            userRepository.observeUsers().collect {
+                Log.d("ViewModel", "Collected ${it.size} items")
+            }
         }
         _state.value = State.Started(Profession.values().map { it.toString() })
     }
 
     override fun onCleared() {
         super.onCleared()
-        sharedPreferences.unregisterListener()
+        userRepository.release()
     }
 
     fun addUser(name: String, email: String, code: String, professionName: String) {
         val allDataIsValid = name.isNotBlank() && email.isNotBlank() && code.isNotBlank() && professionName.isNotBlank()
         if (allDataIsValid) {
-            sharedPreferences.apply {
-                writeName(name)
-                writeEmail(email)
-                writeCode(code.toInt())
-                writeProfession(Profession.valueOf(professionName.toUpperCase(Locale.getDefault())))
+            viewModelScope.launch {
+                userRepository.addUser(
+                    UserInfo(
+                        name = name,
+                        email = email,
+                        code = code.toInt(),
+                        profession = Profession.valueOf(professionName.toUpperCase(Locale.getDefault()))
+                    )
+                )
+                _state.value = State.Completed
             }
-            _state.value = State.Completed
         }
     }
 }

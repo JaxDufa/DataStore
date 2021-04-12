@@ -31,7 +31,11 @@ interface UsersProtoPreferencesDataStore {
 
     suspend fun addUser(user: UserInfo)
 
+    suspend fun editUser(index: Int, name: String? = null, email: String? = null, profession: Profession? = null)
+
     suspend fun removeUser(index: Int)
+
+    suspend fun clear()
 }
 
 class UsersProtoPreferencesDataStoreImpl(private val context: Context) : UsersProtoPreferencesDataStore {
@@ -69,10 +73,35 @@ class UsersProtoPreferencesDataStoreImpl(private val context: Context) : UsersPr
         }
     }
 
+    override suspend fun editUser(index: Int, name: String?, email: String?, profession: Profession?) {
+        context.dataStore.updateData { preferences ->
+            val user = preferences.getUsers(index)
+            preferences.toBuilder()
+                .setUsers(
+                    index,
+                    UsersPreferences.User.newBuilder().apply {
+                        this.name = name ?: user.name
+                        this.email = email ?: user.email
+                        this.code = user.code
+                        this.profession = UsersPreferences.User.Profession.valueOf(profession?.name ?: user.profession.name)
+                    }
+                )
+                .build()
+        }
+    }
+
     override suspend fun removeUser(index: Int) {
         context.dataStore.updateData { preferences ->
             preferences.toBuilder()
                 .removeUsers(index)
+                .build()
+        }
+    }
+
+    override suspend fun clear() {
+        context.dataStore.updateData { preferences ->
+            preferences.toBuilder()
+                .clearUsers()
                 .build()
         }
     }

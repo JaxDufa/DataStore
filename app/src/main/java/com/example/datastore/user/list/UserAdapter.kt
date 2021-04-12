@@ -30,24 +30,25 @@ class UserAdapter(private val onClickListener: (code: Int) -> Unit) : ListAdapte
 
     override fun onBindViewHolder(holder: UserViewHolder, position: Int) {
         val item = getItem(position)
-        holder.bind(item)
+        holder.bind(position, item)
     }
 
-    inner class UserViewHolder(val binding: LayoutUserItemBinding): RecyclerView.ViewHolder(binding.root) {
+    inner class UserViewHolder(private val binding: LayoutUserItemBinding) : RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(item: UserInfo) {
+        fun bind(position: Int, item: UserInfo) {
             with(binding) {
                 textName.text = item.name
                 textEmail.text = item.email
 
                 root.setOnClickListener {
-                    onClickListener(item.code)
+                    onClickListener(position)
                 }
             }
         }
     }
 
     class DiffCallback : DiffUtil.ItemCallback<UserInfo>() {
+
         override fun areItemsTheSame(oldItem: UserInfo, newItem: UserInfo): Boolean {
             return oldItem.code == newItem.code
         }

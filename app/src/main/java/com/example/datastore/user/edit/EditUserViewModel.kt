@@ -19,15 +19,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.datastore.store.Profession
 import com.example.datastore.store.UserInfo
-import com.example.datastore.store.UserPreferencesDataStore
-import com.example.datastore.store.UserSharedPreferences
+import com.example.datastore.store.UserRepository
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.util.Locale
 
 class EditUserViewModel(
-    private val sharedPreferences: UserSharedPreferences,
-    private val preferencesDataStore: UserPreferencesDataStore
+    private val userIndex: Int,
+    private val userRepository: UserRepository
 ) : ViewModel() {
 
     private val _state = MutableLiveData<State>()
@@ -40,13 +39,9 @@ class EditUserViewModel(
     }
 
     init {
-        sharedPreferences.registerListener { key, newValue ->
-            Log.d("Update SharedPrefs", "$key - $newValue")
-        }
-
         viewModelScope.launch {
-            preferencesDataStore.userFlow.collect {
-                Log.d("Update PDS", "$it")
+            userRepository.observeUsers().collect {
+                Log.d("ViewModel", "Collected ${it.size} items")
             }
         }
 
@@ -55,7 +50,7 @@ class EditUserViewModel(
 
     fun loadUser() {
         viewModelScope.launch {
-            val user = preferencesDataStore.readUser()
+            val user = userRepository.readUser(userIndex)
             _state.postValue(State.Loaded(user))
         }
     }
@@ -64,26 +59,22 @@ class EditUserViewModel(
         val allDataIsValid = name.isNotBlank() && email.isNotBlank() && professionName.isNotBlank()
         if (allDataIsValid) {
             viewModelScope.launch {
-                preferencesDataStore.apply {
-                    writeName(name)
-                    writeEmail(email)
-                    writeProfession(Profession.valueOf(professionName.toUpperCase(Locale.getDefault())))
-                }
+                userRepository.writeUser(name = name, email = email, profession = Profession.valueOf(professionName.toUpperCase(Locale.getDefault())))
                 _state.postValue(State.UserEdited)
             }
         }
     }
 
-//    fun editUser() {
-//        _state.postValue(State.Editing)
-//    }
-//
-//    fun saveUser() {
-//        _state.postValue(State.Saved)
-//    }
+    //    fun editUser() {
+    //        _state.postValue(State.Editing)
+    //    }
+    //
+    //    fun saveUser() {
+    //        _state.postValue(State.Saved)
+    //    }
 
     override fun onCleared() {
         super.onCleared()
-        sharedPreferences.unregisterListener()
+        userRepository.release()
     }
 }

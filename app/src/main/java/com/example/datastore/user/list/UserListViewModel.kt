@@ -18,16 +18,12 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.datastore.store.UserInfo
-import com.example.datastore.store.UserPreferencesDataStore
-import com.example.datastore.store.UserSharedPreferences
-import com.example.datastore.store.proto.UserProtoPreferencesDataStore
+import com.example.datastore.store.UserRepository
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 class UserListViewModel(
-    private val sharedPreferences: UserSharedPreferences,
-    private val preferencesDataStore: UserPreferencesDataStore,
-    private val protoPreferencesDataStore: UserProtoPreferencesDataStore
+    private val userRepository: UserRepository
 ) : ViewModel() {
 
     private val _state = MutableLiveData<State>()
@@ -38,26 +34,16 @@ class UserListViewModel(
     }
 
     init {
-        sharedPreferences.registerListener { key, newValue ->
-            Log.d("Update SharedPrefs", "$key - $newValue")
-        }
-
         viewModelScope.launch {
-            preferencesDataStore.userFlow.collect {
-                Log.d("Update PDS", "$it")
-                _state.postValue(State.Started(listOf(it)))
-            }
-        }
-
-        viewModelScope.launch {
-            protoPreferencesDataStore.userFlow.collect {
-                Log.d("Update PPDS", "$it")
+            userRepository.observeUsers().collect {
+                Log.d("ViewModel", "Collected ${it.size} items")
+                _state.postValue(State.Started(it))
             }
         }
     }
 
     override fun onCleared() {
         super.onCleared()
-        sharedPreferences.unregisterListener()
+        userRepository.release()
     }
 }

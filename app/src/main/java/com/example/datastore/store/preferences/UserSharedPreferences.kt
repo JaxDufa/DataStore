@@ -10,16 +10,18 @@
  * the license agreement.
  */
 
-package com.example.datastore.store
+package com.example.datastore.store.preferences
 
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import com.example.datastore.store.Profession
+import com.example.datastore.store.UserInfo
 
 const val USER_SHARED_PREFERENCES_NAME = "shared_prefs"
 const val USER_EXTRA_SHARED_PREFERENCES_NAME = "extra_shared_prefs"
 
-typealias PreferencesListener = (key: String, newValue: Any) -> Unit
+typealias PreferencesListener = (user: UserInfo) -> Unit
 
 interface UserSharedPreferences {
 
@@ -27,7 +29,15 @@ interface UserSharedPreferences {
 
     fun unregisterListener()
 
+    fun readUser(): UserInfo
+
     fun readName(): String
+
+    fun readEmail(): String
+
+    fun readCode(): Int
+
+    fun readProfession(): Profession
 
     fun writeName(name: String)
 
@@ -54,23 +64,25 @@ class UserSharedPreferencesImpl(context: Context) : UserSharedPreferences {
 
     private var preferencesChangeListener: SharedPreferences.OnSharedPreferenceChangeListener? = null
 
-//    init {
-//        sharedPreferences.edit {
-//            putString(Keys.NAME_KEY, "Sidarta")
-//        }
-//        extraSharedPreferences.edit {
-//            putString(Keys.NICK_NAME_KEY, "Hacker 2000")
-//            putInt(Keys.AGE_KEY, 100)
-//        }
-//    }
+    //    init {
+    //        sharedPreferences.edit {
+    //            putString(Keys.NAME_KEY, "Sidarta")
+    //        }
+    //        extraSharedPreferences.edit {
+    //            putString(Keys.EMAIL_KEY, "Hacker.2000@yahoo.com")
+    //        }
+    //    }
 
     override fun registerListener(onPreferencesChanged: PreferencesListener) {
         preferencesChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { sharedPreferences, key ->
-            if (key == Keys.CODE_KEY) {
-                onPreferencesChanged(key, sharedPreferences.getInt(key, 0))
-            } else {
-                onPreferencesChanged(key, sharedPreferences.getString(key, "").orEmpty())
-            }
+            UserInfo(
+                name = sharedPreferences.getString(Keys.NAME_KEY, "").orEmpty(),
+                email = sharedPreferences.getString(Keys.EMAIL_KEY, "").orEmpty(),
+                code = sharedPreferences.getInt(key, 0),
+                profession = sharedPreferences.getString(Keys.PROFESSION_KEY, null)?.let {
+                    Profession.valueOf(it)
+                } ?: Profession.OTHER
+            )
         }
         sharedPreferences.registerOnSharedPreferenceChangeListener(preferencesChangeListener)
     }
@@ -78,11 +90,33 @@ class UserSharedPreferencesImpl(context: Context) : UserSharedPreferences {
     override fun unregisterListener() {
         sharedPreferences.unregisterOnSharedPreferenceChangeListener(preferencesChangeListener)
     }
-    // endregion
 
     // region - Read
+    override fun readUser(): UserInfo {
+        return UserInfo(
+            name = readName(),
+            email = readEmail(),
+            code = readCode(),
+            profession = readProfession()
+        )
+    }
+
     override fun readName(): String {
         return sharedPreferences.getString(Keys.NAME_KEY, "").orEmpty()
+    }
+
+    override fun readEmail(): String {
+        return sharedPreferences.getString(Keys.EMAIL_KEY, "").orEmpty()
+    }
+
+    override fun readCode(): Int {
+        return sharedPreferences.getInt(Keys.CODE_KEY, 0)
+    }
+
+    override fun readProfession(): Profession {
+        return sharedPreferences.getString(Keys.PROFESSION_KEY, null)?.let {
+            Profession.valueOf(it)
+        } ?: Profession.OTHER
     }
     // endregion
 

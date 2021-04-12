@@ -19,11 +19,12 @@ import androidx.datastore.migrations.SharedPreferencesMigration
 import androidx.datastore.migrations.SharedPreferencesView
 import com.example.datastore.UserPreferences
 import com.example.datastore.store.Profession
-import com.example.datastore.store.USER_SHARED_PREFERENCES_NAME
 import com.example.datastore.store.UserInfo
-import com.example.datastore.store.UserSharedPreferencesImpl
+import com.example.datastore.store.preferences.USER_SHARED_PREFERENCES_NAME
+import com.example.datastore.store.preferences.UserSharedPreferencesImpl
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.io.IOException
 
@@ -33,13 +34,17 @@ interface UserProtoPreferencesDataStore {
 
     val userFlow: Flow<UserInfo>
 
+    suspend fun readUser() : UserInfo
+
     suspend fun updateName(name: String)
 
-    suspend fun updateNickName(nickName: String)
+    suspend fun updateEmail(email: String)
 
-    suspend fun updateAge(age: Int)
+    suspend fun updateCode(code: Int)
 
     suspend fun updateProfession(profession: Profession)
+
+    suspend fun clear()
 }
 
 class UserProtoPreferencesDataStoreImpl(private val context: Context) : UserProtoPreferencesDataStore {
@@ -87,6 +92,10 @@ class UserProtoPreferencesDataStoreImpl(private val context: Context) : UserProt
             )
         }
 
+    override suspend fun readUser(): UserInfo {
+        return userFlow.first()
+    }
+
     override suspend fun updateName(name: String) {
         context.dataStore.updateData { preferences ->
             preferences.toBuilder()
@@ -95,18 +104,18 @@ class UserProtoPreferencesDataStoreImpl(private val context: Context) : UserProt
         }
     }
 
-    override suspend fun updateNickName(nickName: String) {
+    override suspend fun updateEmail(email: String) {
         context.dataStore.updateData { preferences ->
             preferences.toBuilder()
-                .setEmail(nickName)
+                .setEmail(email)
                 .build()
         }
     }
 
-    override suspend fun updateAge(age: Int) {
+    override suspend fun updateCode(code: Int) {
         context.dataStore.updateData { preferences ->
             preferences.toBuilder()
-                .setCode(age)
+                .setCode(code)
                 .build()
         }
     }
@@ -116,6 +125,12 @@ class UserProtoPreferencesDataStoreImpl(private val context: Context) : UserProt
             preferences.toBuilder()
                 .setProfession(UserPreferences.Profession.valueOf(profession.name))
                 .build()
+        }
+    }
+
+    override suspend fun clear() {
+        context.dataStore.updateData { preferences ->
+            preferences.toBuilder().clear().build()
         }
     }
 

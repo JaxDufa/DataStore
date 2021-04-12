@@ -14,6 +14,8 @@ package com.example.datastore.store
 
 import java.util.Locale
 
+const val USER_KEY = "user_id"
+
 data class UserInfo(val name: String, val email: String, val code: Int, val profession: Profession)
 
 enum class Profession {

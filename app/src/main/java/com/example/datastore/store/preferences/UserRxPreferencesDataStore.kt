@@ -10,7 +10,7 @@
  * the license agreement.
  */
 
-package com.example.datastore.store
+package com.example.datastore.store.preferences
 
 import android.content.Context
 import androidx.datastore.preferences.SharedPreferencesMigration
@@ -20,6 +20,8 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.rxjava2.rxPreferencesDataStore
 import androidx.datastore.rxjava2.RxDataStore
+import com.example.datastore.store.Profession
+import com.example.datastore.store.UserInfo
 import io.reactivex.Completable
 import io.reactivex.Flowable
 import io.reactivex.Single

@@ -21,12 +21,14 @@ import android.widget.AutoCompleteTextView
 import androidx.fragment.app.Fragment
 import com.example.datastore.R
 import com.example.datastore.databinding.FragmentEditUserBinding
+import com.example.datastore.store.USER_KEY
 import com.google.android.material.textfield.TextInputLayout
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
 
 class EditUserFragment : Fragment() {
 
-    private val viewModel: EditUserViewModel by viewModel()
+    private val viewModel: EditUserViewModel by viewModel { parametersOf(arguments?.getInt(USER_KEY)!!) }
     private var _binding: FragmentEditUserBinding? = null
 
     // This property is only valid between onCreateView and onDestroyView

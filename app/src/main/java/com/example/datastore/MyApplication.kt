@@ -13,12 +13,14 @@
 package com.example.datastore
 
 import android.app.Application
-import com.example.datastore.store.UserPreferencesDataStore
-import com.example.datastore.store.UserPreferencesDataStoreImpl
-import com.example.datastore.store.UserRxPreferencesDataStore
-import com.example.datastore.store.UserRxPreferencesDataStoreImpl
-import com.example.datastore.store.UserSharedPreferences
-import com.example.datastore.store.UserSharedPreferencesImpl
+import com.example.datastore.store.UserRepository
+import com.example.datastore.store.UserRepositoryImpl
+import com.example.datastore.store.preferences.UserPreferencesDataStore
+import com.example.datastore.store.preferences.UserPreferencesDataStoreImpl
+import com.example.datastore.store.preferences.UserRxPreferencesDataStore
+import com.example.datastore.store.preferences.UserRxPreferencesDataStoreImpl
+import com.example.datastore.store.preferences.UserSharedPreferences
+import com.example.datastore.store.preferences.UserSharedPreferencesImpl
 import com.example.datastore.store.proto.UserProtoPreferencesDataStore
 import com.example.datastore.store.proto.UserProtoPreferencesDataStoreImpl
 import com.example.datastore.store.proto.UsersProtoPreferencesDataStore
@@ -44,9 +46,11 @@ class MyApplication : Application() {
         single<UserProtoPreferencesDataStore> { UserProtoPreferencesDataStoreImpl(androidContext()) }
         single<UsersProtoPreferencesDataStore> { UsersProtoPreferencesDataStoreImpl(androidContext()) }
 
+        single<UserRepository> { UserRepositoryImpl(get(), get(), get(), get()) }
+
         viewModel { AddUserViewModel(get()) }
-        viewModel { EditUserViewModel(get(), get()) }
-        viewModel { UserListViewModel(get(), get(), get()) }
+        viewModel { UserListViewModel(get()) }
+        viewModel { (userIndex: Int) -> EditUserViewModel(userIndex, get()) }
     }
 
     override fun onCreate() {

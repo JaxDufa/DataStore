@@ -17,11 +17,13 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.datastore.R
 import com.example.datastore.databinding.FragmentUserListBinding
+import com.example.datastore.store.USER_KEY
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class UserListFragment : Fragment() {
@@ -44,7 +46,7 @@ class UserListFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         val adapter = UserAdapter {
-            findNavController().navigate(R.id.action_toUserDetails)
+            findNavController().navigate(R.id.action_toUserDetails, bundleOf(USER_KEY to it))
         }
 
         with(binding) {

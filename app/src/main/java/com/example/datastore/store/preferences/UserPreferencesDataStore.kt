@@ -10,7 +10,7 @@
  * the license agreement.
  */
 
-package com.example.datastore.store
+package com.example.datastore.store.preferences
 
 import android.content.Context
 import androidx.datastore.core.DataStore
@@ -21,6 +21,8 @@ import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.example.datastore.store.Profession
+import com.example.datastore.store.UserInfo
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
