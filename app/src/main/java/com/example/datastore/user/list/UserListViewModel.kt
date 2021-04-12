@@ -37,8 +37,15 @@ class UserListViewModel(
         viewModelScope.launch {
             userRepository.observeUsers().collect {
                 Log.d("ViewModel", "Collected ${it.size} items")
-                _state.postValue(State.Started(it))
             }
+        }
+    }
+
+    fun loadUsers() {
+        viewModelScope.launch {
+            val users = userRepository.readUsers()
+            val validUsers = users.mapNotNull { if (it.isValid) it else null }
+            _state.postValue(State.Started(validUsers))
         }
     }
 

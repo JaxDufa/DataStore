@@ -36,6 +36,8 @@ interface UserRepository {
 
     suspend fun observeUsers(): Flow<List<UserInfo>>
 
+    suspend fun readUsers(): List<UserInfo>
+
     suspend fun readUser(index: Int? = null): UserInfo
 
     suspend fun writeUser(index: Int? = null, name: String? = null, email: String? = null, profession: Profession? = null)
@@ -56,7 +58,7 @@ class UserRepositoryImpl(
     private val listProtoPreferencesDataStore: UsersProtoPreferencesDataStore
 ) : UserRepository {
 
-    override var method: UserRepository.Method = UserRepository.Method.SHARED_PREFERENCES
+    override var method: UserRepository.Method = UserRepository.Method.LIST_PROTO_DATA_STORE
 
     override suspend fun observeUsers(): Flow<List<UserInfo>> {
         return when (method) {
@@ -75,6 +77,17 @@ class UserRepositoryImpl(
         }.onEach { Log.d(TAG, "${method.name}: Update $it") }
     }
 
+    override suspend fun readUsers(): List<UserInfo> {
+        return when (method) {
+            UserRepository.Method.SHARED_PREFERENCES -> listOf(sharedPreferences.readUser())
+            UserRepository.Method.DATA_STORE_PREFERENCES -> listOf(dataStorePreferencesDataStore.readUser())
+            UserRepository.Method.PROTO_DATA_STORE -> listOf(protoPreferencesDataStore.readUser())
+            UserRepository.Method.LIST_PROTO_DATA_STORE -> listProtoPreferencesDataStore.usersPreferencesFlow.first()
+        }.apply {
+            Log.d(TAG, "${method.name}: Read $this")
+        }
+    }
+
     override suspend fun readUser(index: Int?): UserInfo {
         return when (method) {
             UserRepository.Method.SHARED_PREFERENCES -> sharedPreferences.readUser()
@@ -83,6 +96,8 @@ class UserRepositoryImpl(
             UserRepository.Method.LIST_PROTO_DATA_STORE -> listProtoPreferencesDataStore.usersPreferencesFlow.map { users ->
                 index?.let { users[it] } ?: users.first()
             }.first()
+        }.apply {
+            Log.d(TAG, "${method.name}: Read $this")
         }
     }
 
@@ -91,14 +106,14 @@ class UserRepositoryImpl(
             UserRepository.Method.SHARED_PREFERENCES -> {
                 with(sharedPreferences) {
                     name?.let { writeName(it) }
-                    email?.let { writeName(it) }
+                    email?.let { writeEmail(it) }
                     profession?.let { writeProfession(it) }
                 }
             }
             UserRepository.Method.DATA_STORE_PREFERENCES -> {
                 with(dataStorePreferencesDataStore) {
                     name?.let { writeName(it) }
-                    email?.let { writeName(it) }
+                    email?.let { writeEmail(it) }
                     profession?.let { writeProfession(it) }
                 }
             }
@@ -122,6 +137,7 @@ class UserRepositoryImpl(
                 }
             }
         }
+        Log.d(TAG, "${method.name}: Edit $index")
     }
 
     override suspend fun addUser(user: UserInfo) {
@@ -157,7 +173,10 @@ class UserRepositoryImpl(
 
     override suspend fun removeUser(index: Int) {
         when (method) {
-            UserRepository.Method.LIST_PROTO_DATA_STORE -> Unit
+            UserRepository.Method.LIST_PROTO_DATA_STORE -> {
+                listProtoPreferencesDataStore.removeUser(index)
+                Log.d(TAG, "${method.name}: Remove $index")
+            }
             else -> clear()
         }
     }
