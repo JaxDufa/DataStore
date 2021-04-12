@@ -22,6 +22,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.asLiveData
 import androidx.navigation.fragment.findNavController
 import com.example.datastore.R
+import com.example.datastore.RELOAD_KEY
 import com.example.datastore.databinding.FragmentAddUserBinding
 import com.google.android.material.textfield.TextInputLayout
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -48,22 +49,21 @@ class AddUserFragment : Fragment() {
         with(binding) {
             viewModel.state.asLiveData().observe(viewLifecycleOwner) {
 
-                when(it) {
+                when (it) {
                     is AddUserViewModel.State.Started -> {
                         val professionsAdapter = ArrayAdapter(requireContext(), R.layout.support_simple_spinner_dropdown_item, it.professionNames)
                         (inputTextProfession.editText as? AutoCompleteTextView)?.setAdapter(professionsAdapter)
                     }
-                    is AddUserViewModel.State.Completed -> findNavController().navigate(R.id.action_toUserList)
+                    is AddUserViewModel.State.Completed -> {
+                        findNavController().previousBackStackEntry?.savedStateHandle?.set(RELOAD_KEY, true)
+                        findNavController().popBackStack()
+                    }
                     else -> Unit
                 }
             }
 
             buttonNext.setOnClickListener {
                 viewModel.addUser(inputTextName.text(), inputTextEmail.text(), inputTextCode.text(), inputTextProfession.text())
-            }
-
-            buttonSkip.setOnClickListener {
-                findNavController().navigate(R.id.action_toUserList)
             }
         }
     }

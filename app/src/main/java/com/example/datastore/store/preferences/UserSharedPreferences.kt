@@ -78,7 +78,7 @@ class UserSharedPreferencesImpl(context: Context) : UserSharedPreferences {
             UserInfo(
                 name = sharedPreferences.getString(Keys.NAME_KEY, "").orEmpty(),
                 email = sharedPreferences.getString(Keys.EMAIL_KEY, "").orEmpty(),
-                code = sharedPreferences.getInt(key, 0),
+                code = sharedPreferences.getInt(Keys.CODE_KEY, 0),
                 profession = sharedPreferences.getString(Keys.PROFESSION_KEY, null)?.let {
                     Profession.valueOf(it)
                 } ?: Profession.OTHER

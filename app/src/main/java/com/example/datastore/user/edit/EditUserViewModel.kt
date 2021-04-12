@@ -35,7 +35,7 @@ class EditUserViewModel(
     sealed class State {
         class Started(val professionNames: List<String>) : State()
         class Loaded(val user: UserInfo) : State()
-        object UserEdited : State()
+        object Completed : State()
     }
 
     init {
@@ -44,7 +44,6 @@ class EditUserViewModel(
                 Log.d("ViewModel", "Collected ${it.size} items")
             }
         }
-
         _state.postValue(State.Started(Profession.values().map { it.toString() }))
     }
 
@@ -55,23 +54,22 @@ class EditUserViewModel(
         }
     }
 
+    fun removeUser() {
+        viewModelScope.launch {
+            userRepository.removeUser(userIndex)
+            _state.postValue(State.Completed)
+        }
+    }
+
     fun editUser(name: String, email: String, professionName: String) {
         val allDataIsValid = name.isNotBlank() && email.isNotBlank() && professionName.isNotBlank()
         if (allDataIsValid) {
             viewModelScope.launch {
-                userRepository.writeUser(name = name, email = email, profession = Profession.valueOf(professionName.toUpperCase(Locale.getDefault())))
-                _state.postValue(State.UserEdited)
+                userRepository.writeUser(userIndex, name, email, profession = Profession.valueOf(professionName.toUpperCase(Locale.getDefault())))
+                _state.postValue(State.Completed)
             }
         }
     }
-
-    //    fun editUser() {
-    //        _state.postValue(State.Editing)
-    //    }
-    //
-    //    fun saveUser() {
-    //        _state.postValue(State.Saved)
-    //    }
 
     override fun onCleared() {
         super.onCleared()

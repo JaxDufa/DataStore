@@ -3,25 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/addUserFragment">
-
-    <fragment
-        android:id="@+id/addUserFragment"
-        android:name="com.example.datastore.user.add.AddUserFragment"
-        android:label="AddUserFragment"
-        tools:layout="@layout/fragment_add_user">
-
-        <action
-            android:id="@+id/action_toUserList"
-            app:destination="@id/userListFragment"
-            app:popUpTo="@id/addUserFragment"
-            app:popUpToInclusive="true" />
-        <action
-            android:id="@+id/action_toUserDetails"
-            app:destination="@id/userDetailsFragment"
-            app:popUpTo="@id/addUserFragment"
-            app:popUpToInclusive="true" />
-    </fragment>
+    app:startDestination="@id/userListFragment">
 
     <fragment
         android:id="@+id/userListFragment"
@@ -39,13 +21,16 @@
     </fragment>
 
     <fragment
+        android:id="@+id/addUserFragment"
+        android:name="com.example.datastore.user.add.AddUserFragment"
+        android:label="AddUserFragment"
+        tools:layout="@layout/fragment_add_user">
+    </fragment>
+
+    <fragment
         android:id="@+id/userDetailsFragment"
         android:name="com.example.datastore.user.edit.EditUserFragment"
         android:label="UserDetailsFragment"
         tools:layout="@layout/fragment_edit_user">
-
-        <action
-            android:id="@+id/action_toAddUser"
-            app:destination="@id/addUserFragment" />
     </fragment>
 </navigation>

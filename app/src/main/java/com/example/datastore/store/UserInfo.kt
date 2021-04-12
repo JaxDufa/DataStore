@@ -16,7 +16,11 @@ import java.util.Locale
 
 const val USER_KEY = "user_id"
 
-data class UserInfo(val name: String, val email: String, val code: Int, val profession: Profession)
+data class UserInfo(val name: String, val email: String, val code: Int, val profession: Profession) {
+
+    val isValid: Boolean
+        get() = name.isNotBlank()
+}
 
 enum class Profession {
     DEVELOPER, ENGINEER, HITMAN, MEDIC, WRITER, OTHER;

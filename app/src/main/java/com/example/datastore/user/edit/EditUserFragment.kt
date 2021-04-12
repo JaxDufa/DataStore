@@ -19,7 +19,9 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import com.example.datastore.R
+import com.example.datastore.RELOAD_KEY
 import com.example.datastore.databinding.FragmentEditUserBinding
 import com.example.datastore.store.USER_KEY
 import com.google.android.material.textfield.TextInputLayout
@@ -62,18 +64,28 @@ class EditUserFragment : Fragment() {
 //                        listSelection = 2
 //                        inputTextProfession.editText?.setText(it.user.profession.toString())
                     }
-                    is EditUserViewModel.State.UserEdited -> {
+                    is EditUserViewModel.State.Completed -> {
                         enableViews(false, inputTextName, inputTextEmail, inputTextProfession)
+                        findNavController().previousBackStackEntry?.savedStateHandle?.set(RELOAD_KEY, true)
+                        findNavController().popBackStack()
                     }
                 }
             }
 
-            buttonEdit.setOnClickListener {
-                enableViews(true, inputTextName, inputTextEmail, inputTextProfession)
+            buttonRemove.setOnClickListener {
+                viewModel.removeUser()
             }
 
-            buttonSave.setOnClickListener {
+            fabEdit.setOnClickListener {
+                enableViews(true, inputTextName, inputTextEmail, inputTextProfession)
+                fabSave.visibility = View.VISIBLE
+                fabEdit.visibility = View.GONE
+            }
+
+            fabSave.setOnClickListener {
                 viewModel.editUser(inputTextName.text(), inputTextEmail.text(), inputTextProfession.text())
+                fabSave.visibility = View.GONE
+                fabEdit.visibility = View.VISIBLE
             }
         }
     }
