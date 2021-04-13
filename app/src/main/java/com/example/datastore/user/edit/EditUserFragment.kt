@@ -50,7 +50,7 @@ class EditUserFragment : Fragment() {
         with(binding) {
 
             viewModel.state.observe(viewLifecycleOwner) {
-                when(it) {
+                when (it) {
                     is EditUserViewModel.State.Started -> {
                         val professionsAdapter = ArrayAdapter(requireContext(), R.layout.support_simple_spinner_dropdown_item, it.professionNames)
                         (inputTextProfession.editText as? AutoCompleteTextView)?.setAdapter(professionsAdapter)
@@ -60,9 +60,7 @@ class EditUserFragment : Fragment() {
                     is EditUserViewModel.State.Loaded -> {
                         inputTextName.editText?.setText(it.user.name)
                         inputTextEmail.editText?.setText(it.user.email)
-                        (inputTextProfession.editText as? AutoCompleteTextView)?.setText(it.user.profession.toString())
-//                        listSelection = 2
-//                        inputTextProfession.editText?.setText(it.user.profession.toString())
+                        (inputTextProfession.editText as? AutoCompleteTextView)?.setText(it.user.profession.toString(), false)
                     }
                     is EditUserViewModel.State.Completed -> {
                         enableViews(false, inputTextName, inputTextEmail, inputTextProfession)
