@@ -70,9 +70,4 @@ class EditUserViewModel(
             }
         }
     }
-
-    override fun onCleared() {
-        super.onCleared()
-        userRepository.release()
-    }
 }

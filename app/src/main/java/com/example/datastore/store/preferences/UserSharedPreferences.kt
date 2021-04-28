@@ -17,39 +17,47 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 import com.example.datastore.store.Profession
 import com.example.datastore.store.UserInfo
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.flattenMerge
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.shareIn
 
 const val USER_SHARED_PREFERENCES_NAME = "shared_prefs"
 const val USER_EXTRA_SHARED_PREFERENCES_NAME = "extra_shared_prefs"
 
-typealias PreferencesListener = (user: UserInfo) -> Unit
-
 interface UserSharedPreferences {
 
-    fun registerListener(onPreferencesChanged: PreferencesListener)
+    val userFlow: Flow<UserInfo>
 
-    fun unregisterListener()
+    suspend fun readUser(): UserInfo
 
-    fun readUser(): UserInfo
+    suspend fun readName(): String
 
-    fun readName(): String
+    suspend fun readEmail(): String
 
-    fun readEmail(): String
+    suspend fun readCode(): Int
 
-    fun readCode(): Int
+    suspend fun readProfession(): Profession
 
-    fun readProfession(): Profession
+    suspend fun writeName(name: String)
 
-    fun writeName(name: String)
+    suspend fun writeEmail(email: String)
 
-    fun writeEmail(email: String)
+    suspend fun writeCode(code: Int)
 
-    fun writeCode(code: Int)
+    suspend fun writeProfession(profession: Profession)
 
-    fun writeProfession(profession: Profession)
-
-    fun clear()
+    suspend fun clear()
 }
 
+@ExperimentalCoroutinesApi
 class UserSharedPreferencesImpl(context: Context) : UserSharedPreferences {
 
     object Keys {
@@ -64,35 +72,14 @@ class UserSharedPreferencesImpl(context: Context) : UserSharedPreferences {
 
     private var preferencesChangeListener: SharedPreferences.OnSharedPreferenceChangeListener? = null
 
-    //    init {
-    //        sharedPreferences.edit {
-    //            putString(Keys.NAME_KEY, "Sidarta")
-    //        }
-    //        extraSharedPreferences.edit {
-    //            putString(Keys.EMAIL_KEY, "Hacker.2000@yahoo.com")
-    //        }
-    //    }
+    private val clearDataFlow = MutableSharedFlow<UserInfo>()
 
-    override fun registerListener(onPreferencesChanged: PreferencesListener) {
-        preferencesChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { sharedPreferences, key ->
-            UserInfo(
-                name = sharedPreferences.getString(Keys.NAME_KEY, "").orEmpty(),
-                email = sharedPreferences.getString(Keys.EMAIL_KEY, "").orEmpty(),
-                code = sharedPreferences.getInt(Keys.CODE_KEY, 0),
-                profession = sharedPreferences.getString(Keys.PROFESSION_KEY, null)?.let {
-                    Profession.valueOf(it)
-                } ?: Profession.OTHER
-            )
-        }
-        sharedPreferences.registerOnSharedPreferenceChangeListener(preferencesChangeListener)
-    }
-
-    override fun unregisterListener() {
-        sharedPreferences.unregisterOnSharedPreferenceChangeListener(preferencesChangeListener)
-    }
+    override val userFlow: Flow<UserInfo> = flowOf(createListener(), clearDataFlow)
+        .flattenMerge()
+        .shareIn(CoroutineScope(Dispatchers.IO), SharingStarted.WhileSubscribed())
 
     // region - Read
-    override fun readUser(): UserInfo {
+    override suspend fun readUser(): UserInfo {
         return UserInfo(
             name = readName(),
             email = readEmail(),
@@ -101,19 +88,19 @@ class UserSharedPreferencesImpl(context: Context) : UserSharedPreferences {
         )
     }
 
-    override fun readName(): String {
+    override suspend fun readName(): String {
         return sharedPreferences.getString(Keys.NAME_KEY, "").orEmpty()
     }
 
-    override fun readEmail(): String {
+    override suspend fun readEmail(): String {
         return sharedPreferences.getString(Keys.EMAIL_KEY, "").orEmpty()
     }
 
-    override fun readCode(): Int {
+    override suspend fun readCode(): Int {
         return sharedPreferences.getInt(Keys.CODE_KEY, 0)
     }
 
-    override fun readProfession(): Profession {
+    override suspend fun readProfession(): Profession {
         return sharedPreferences.getString(Keys.PROFESSION_KEY, null)?.let {
             Profession.valueOf(it)
         } ?: Profession.OTHER
@@ -121,25 +108,25 @@ class UserSharedPreferencesImpl(context: Context) : UserSharedPreferences {
     // endregion
 
     // region - Write
-    override fun writeName(name: String) {
+    override suspend fun writeName(name: String) {
         sharedPreferences.edit {
             putString(Keys.NAME_KEY, name)
         }
     }
 
-    override fun writeEmail(email: String) {
+    override suspend fun writeEmail(email: String) {
         sharedPreferences.edit {
             putString(Keys.EMAIL_KEY, email)
         }
     }
 
-    override fun writeCode(code: Int) {
+    override suspend fun writeCode(code: Int) {
         sharedPreferences.edit {
             putInt(Keys.CODE_KEY, code)
         }
     }
 
-    override fun writeProfession(profession: Profession) {
+    override suspend fun writeProfession(profession: Profession) {
         sharedPreferences.edit {
             putString(Keys.PROFESSION_KEY, profession.name)
         }
@@ -147,10 +134,29 @@ class UserSharedPreferencesImpl(context: Context) : UserSharedPreferences {
     // endregion
 
     // region - Clear
-    override fun clear() {
+    override suspend fun clear() {
         sharedPreferences.edit {
             clear()
         }
+        clearDataFlow.emit(UserInfo.empty)
     }
     // endregion
+
+    private fun createListener() = callbackFlow {
+        preferencesChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { sharedPreferences, _ ->
+            offer(
+                UserInfo(
+                    name = sharedPreferences.getString(Keys.NAME_KEY, "").orEmpty(),
+                    email = sharedPreferences.getString(Keys.EMAIL_KEY, "").orEmpty(),
+                    code = sharedPreferences.getInt(Keys.CODE_KEY, 0),
+                    profession = sharedPreferences.getString(Keys.PROFESSION_KEY, null)?.let {
+                        Profession.valueOf(it)
+                    } ?: Profession.OTHER
+                )
+            )
+        }
+
+        sharedPreferences.registerOnSharedPreferenceChangeListener(preferencesChangeListener)
+        awaitClose { sharedPreferences.unregisterOnSharedPreferenceChangeListener(preferencesChangeListener) }
+    }
 }

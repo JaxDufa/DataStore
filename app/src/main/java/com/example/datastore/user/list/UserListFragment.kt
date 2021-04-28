@@ -21,7 +21,6 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.datastore.R
-import com.example.datastore.RELOAD_KEY
 import com.example.datastore.databinding.FragmentUserListBinding
 import com.example.datastore.store.USER_KEY
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -45,15 +44,8 @@ class UserListFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        viewModel.loadUsers()
-
         val adapter = UserAdapter {
             findNavController().navigate(R.id.action_toUserDetails, bundleOf(USER_KEY to it))
-        }
-
-        val backStackStateHandler = findNavController().currentBackStackEntry?.savedStateHandle
-        backStackStateHandler?.getLiveData<Boolean>(RELOAD_KEY)?.observe(viewLifecycleOwner) { result ->
-            if (result) viewModel.loadUsers()
         }
 
         with(binding) {
@@ -67,9 +59,8 @@ class UserListFragment : Fragment() {
             }
             recyclerView.adapter = adapter
             recyclerView.layoutManager = LinearLayoutManager(context)
-            fabAdd.setOnClickListener {
-                findNavController().navigate(R.id.action_toAddUser)
-            }
+            buttonRemove.setOnClickListener { viewModel.removeUsers() }
+            fabAdd.setOnClickListener { findNavController().navigate(R.id.action_toAddUser) }
         }
     }
 

@@ -13,23 +13,22 @@
 package com.example.datastore.store
 
 import android.util.Log
+import com.example.datastore.store.database.UserRoomRepository
 import com.example.datastore.store.preferences.UserPreferencesDataStore
 import com.example.datastore.store.preferences.UserSharedPreferences
 import com.example.datastore.store.proto.UserProtoPreferencesDataStore
 import com.example.datastore.store.proto.UsersProtoPreferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.runBlocking
 
 private const val TAG = "UserRepository"
 
 interface UserRepository {
 
     enum class Method {
-        SHARED_PREFERENCES, DATA_STORE_PREFERENCES, PROTO_DATA_STORE, LIST_PROTO_DATA_STORE
+        SHARED_PREFERENCES, DATA_STORE_PREFERENCES, PROTO_DATA_STORE, ADVANCED_PROTO_DATA_STORE, ROOM_DATABASE
     }
 
     var method: Method
@@ -47,33 +46,25 @@ interface UserRepository {
     suspend fun removeUser(index: Int)
 
     suspend fun clear()
-
-    fun release()
 }
 
 class UserRepositoryImpl(
     private val sharedPreferences: UserSharedPreferences,
     private val dataStorePreferencesDataStore: UserPreferencesDataStore,
     private val protoPreferencesDataStore: UserProtoPreferencesDataStore,
-    private val listProtoPreferencesDataStore: UsersProtoPreferencesDataStore
+    private val advancedProtoPreferencesDataStore: UsersProtoPreferencesDataStore,
+    private val roomDatabase: UserRoomRepository
 ) : UserRepository {
 
-    override var method: UserRepository.Method = UserRepository.Method.LIST_PROTO_DATA_STORE
+    override var method: UserRepository.Method = UserRepository.Method.DATA_STORE_PREFERENCES
 
     override suspend fun observeUsers(): Flow<List<UserInfo>> {
         return when (method) {
-            UserRepository.Method.SHARED_PREFERENCES -> {
-                flow {
-                    sharedPreferences.registerListener { user ->
-                        runBlocking {
-                            this@flow.emit(listOf(user))
-                        }
-                    }
-                }
-            }
+            UserRepository.Method.SHARED_PREFERENCES -> sharedPreferences.userFlow.map { listOf(it) }
             UserRepository.Method.DATA_STORE_PREFERENCES -> dataStorePreferencesDataStore.userFlow.map { listOf(it) }
             UserRepository.Method.PROTO_DATA_STORE -> protoPreferencesDataStore.userFlow.map { listOf(it) }
-            UserRepository.Method.LIST_PROTO_DATA_STORE -> listProtoPreferencesDataStore.usersPreferencesFlow
+            UserRepository.Method.ADVANCED_PROTO_DATA_STORE -> advancedProtoPreferencesDataStore.usersPreferencesFlow
+            UserRepository.Method.ROOM_DATABASE -> roomDatabase.users
         }.onEach { Log.d(TAG, "${method.name}: Update $it") }
     }
 
@@ -82,7 +73,8 @@ class UserRepositoryImpl(
             UserRepository.Method.SHARED_PREFERENCES -> listOf(sharedPreferences.readUser())
             UserRepository.Method.DATA_STORE_PREFERENCES -> listOf(dataStorePreferencesDataStore.readUser())
             UserRepository.Method.PROTO_DATA_STORE -> listOf(protoPreferencesDataStore.readUser())
-            UserRepository.Method.LIST_PROTO_DATA_STORE -> listProtoPreferencesDataStore.usersPreferencesFlow.first()
+            UserRepository.Method.ADVANCED_PROTO_DATA_STORE -> advancedProtoPreferencesDataStore.usersPreferencesFlow.first()
+            UserRepository.Method.ROOM_DATABASE -> roomDatabase.users.first()
         }.apply {
             Log.d(TAG, "${method.name}: Read $this")
         }
@@ -93,7 +85,10 @@ class UserRepositoryImpl(
             UserRepository.Method.SHARED_PREFERENCES -> sharedPreferences.readUser()
             UserRepository.Method.DATA_STORE_PREFERENCES -> dataStorePreferencesDataStore.readUser()
             UserRepository.Method.PROTO_DATA_STORE -> protoPreferencesDataStore.readUser()
-            UserRepository.Method.LIST_PROTO_DATA_STORE -> listProtoPreferencesDataStore.usersPreferencesFlow.map { users ->
+            UserRepository.Method.ADVANCED_PROTO_DATA_STORE -> advancedProtoPreferencesDataStore.usersPreferencesFlow.map { users ->
+                index?.let { users[it] } ?: users.first()
+            }.first()
+            UserRepository.Method.ROOM_DATABASE -> roomDatabase.users.map { users ->
                 index?.let { users[it] } ?: users.first()
             }.first()
         }.apply {
@@ -124,8 +119,8 @@ class UserRepositoryImpl(
                     profession?.let { updateProfession(it) }
                 }
             }
-            UserRepository.Method.LIST_PROTO_DATA_STORE -> {
-                with(listProtoPreferencesDataStore) {
+            UserRepository.Method.ADVANCED_PROTO_DATA_STORE -> {
+                with(advancedProtoPreferencesDataStore) {
                     index?.let {
                         editUser(
                             it,
@@ -134,6 +129,12 @@ class UserRepositoryImpl(
                             profession
                         )
                     }
+                }
+            }
+            UserRepository.Method.ROOM_DATABASE -> {
+                index?.let {
+                    val user = readUser(it)
+                    roomDatabase.insertOrReplace(UserInfo(name ?: user.name, email ?: user.email, user.code, profession ?: user.profession))
                 }
             }
         }
@@ -166,16 +167,19 @@ class UserRepositoryImpl(
                     updateProfession(user.profession)
                 }
             }
-            UserRepository.Method.LIST_PROTO_DATA_STORE -> listProtoPreferencesDataStore.addUser(user)
+            UserRepository.Method.ADVANCED_PROTO_DATA_STORE -> advancedProtoPreferencesDataStore.addUser(user)
+            UserRepository.Method.ROOM_DATABASE -> roomDatabase.insert(user)
         }
         Log.d(TAG, "${method.name}: Add $user")
     }
 
     override suspend fun removeUser(index: Int) {
+        Log.d(TAG, "${method.name}: Remove $index")
         when (method) {
-            UserRepository.Method.LIST_PROTO_DATA_STORE -> {
-                listProtoPreferencesDataStore.removeUser(index)
-                Log.d(TAG, "${method.name}: Remove $index")
+            UserRepository.Method.ADVANCED_PROTO_DATA_STORE -> advancedProtoPreferencesDataStore.removeUser(index)
+            UserRepository.Method.ROOM_DATABASE -> {
+                val code = readUser(index).code
+                roomDatabase.removeUser(code)
             }
             else -> clear()
         }
@@ -186,12 +190,9 @@ class UserRepositoryImpl(
             UserRepository.Method.SHARED_PREFERENCES -> sharedPreferences.clear()
             UserRepository.Method.DATA_STORE_PREFERENCES -> dataStorePreferencesDataStore.clear()
             UserRepository.Method.PROTO_DATA_STORE -> protoPreferencesDataStore.clear()
-            UserRepository.Method.LIST_PROTO_DATA_STORE -> listProtoPreferencesDataStore.clear()
+            UserRepository.Method.ADVANCED_PROTO_DATA_STORE -> advancedProtoPreferencesDataStore.clear()
+            UserRepository.Method.ROOM_DATABASE -> roomDatabase.clear()
         }
         Log.d(TAG, "${method.name}: Clear")
-    }
-
-    override fun release() {
-        sharedPreferences.unregisterListener()
     }
 }

@@ -32,11 +32,9 @@ class AddUserViewModel(
 
     sealed class State {
         object Empty : State()
-        class Started(val professionNames: List<String>) : State()
+        class Started(val code: String, val professionNames: List<String>) : State()
         object Completed : State()
     }
-
-    // TODO add index
 
     init {
         viewModelScope.launch {
@@ -44,12 +42,7 @@ class AddUserViewModel(
                 Log.d("ViewModel", "Collected ${it.size} items")
             }
         }
-        _state.value = State.Started(Profession.values().map { it.toString() })
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        userRepository.release()
+        _state.value = State.Started((1..Int.MAX_VALUE).random().toString(), Profession.values().map { it.toString() })
     }
 
     fun addUser(name: String, email: String, code: String, professionName: String) {

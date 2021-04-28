@@ -51,6 +51,7 @@ class AddUserFragment : Fragment() {
 
                 when (it) {
                     is AddUserViewModel.State.Started -> {
+                        inputTextCode.editText?.setText(it.code)
                         val professionsAdapter = ArrayAdapter(requireContext(), R.layout.support_simple_spinner_dropdown_item, it.professionNames)
                         (inputTextProfession.editText as? AutoCompleteTextView)?.setAdapter(professionsAdapter)
                     }

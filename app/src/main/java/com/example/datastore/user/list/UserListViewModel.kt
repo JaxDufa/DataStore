@@ -35,22 +35,17 @@ class UserListViewModel(
 
     init {
         viewModelScope.launch {
-            userRepository.observeUsers().collect {
-                Log.d("ViewModel", "Collected ${it.size} items")
+            userRepository.observeUsers().collect { users ->
+                Log.d("ViewModel", "Collected ${users.size} items")
+                val validUsers = users.mapNotNull { if (it.isValid) it else null }
+                _state.postValue(State.Started(validUsers))
             }
         }
     }
 
-    fun loadUsers() {
+    fun removeUsers() {
         viewModelScope.launch {
-            val users = userRepository.readUsers()
-            val validUsers = users.mapNotNull { if (it.isValid) it else null }
-            _state.postValue(State.Started(validUsers))
+            userRepository.clear()
         }
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        userRepository.release()
     }
 }

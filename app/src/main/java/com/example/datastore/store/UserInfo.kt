@@ -18,8 +18,12 @@ const val USER_KEY = "user_id"
 
 data class UserInfo(val name: String, val email: String, val code: Int, val profession: Profession) {
 
+    companion object {
+        val empty = UserInfo("", "", -1, Profession.OTHER)
+    }
+
     val isValid: Boolean
-        get() = name.isNotBlank()
+        get() = code > 0 && name.isNotBlank()
 }
 
 enum class Profession {

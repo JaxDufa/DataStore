@@ -13,8 +13,11 @@
 package com.example.datastore
 
 import android.app.Application
+import androidx.room.Room
 import com.example.datastore.store.UserRepository
 import com.example.datastore.store.UserRepositoryImpl
+import com.example.datastore.store.database.UserDatabase
+import com.example.datastore.store.database.UserRoomRepository
 import com.example.datastore.store.preferences.UserPreferencesDataStore
 import com.example.datastore.store.preferences.UserPreferencesDataStoreImpl
 import com.example.datastore.store.preferences.UserRxPreferencesDataStore
@@ -46,7 +49,11 @@ class MyApplication : Application() {
         single<UserProtoPreferencesDataStore> { UserProtoPreferencesDataStoreImpl(androidContext()) }
         single<UsersProtoPreferencesDataStore> { UsersProtoPreferencesDataStoreImpl(androidContext()) }
 
-        single<UserRepository> { UserRepositoryImpl(get(), get(), get(), get()) }
+        single { Room.databaseBuilder(androidContext(), UserDatabase::class.java, "user_database").build() }
+        single { get<UserDatabase>().userDao() }
+        single { UserRoomRepository(get()) }
+
+        single<UserRepository> { UserRepositoryImpl(get(), get(), get(), get(), get()) }
 
         viewModel { AddUserViewModel(get()) }
         viewModel { UserListViewModel(get()) }
@@ -55,7 +62,6 @@ class MyApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-
 
         startKoin {
             // Android context
