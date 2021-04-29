@@ -37,13 +37,13 @@ interface UserRepository {
 
     suspend fun readUsers(): List<UserInfo>
 
-    suspend fun readUser(index: Int? = null): UserInfo
+    suspend fun readUser(code: Int? = null): UserInfo
 
-    suspend fun writeUser(index: Int? = null, name: String? = null, email: String? = null, profession: Profession? = null)
+    suspend fun editUser(code: Int? = null, name: String? = null, email: String? = null, profession: Profession? = null)
 
     suspend fun addUser(user: UserInfo)
 
-    suspend fun removeUser(index: Int)
+    suspend fun removeUser(code: Int)
 
     suspend fun clear()
 }
@@ -56,7 +56,7 @@ class UserRepositoryImpl(
     private val roomDatabase: UserRoomRepository
 ) : UserRepository {
 
-    override var method: UserRepository.Method = UserRepository.Method.DATA_STORE_PREFERENCES
+    override var method: UserRepository.Method = UserRepository.Method.ADVANCED_PROTO_DATA_STORE
 
     override suspend fun observeUsers(): Flow<List<UserInfo>> {
         return when (method) {
@@ -80,65 +80,20 @@ class UserRepositoryImpl(
         }
     }
 
-    override suspend fun readUser(index: Int?): UserInfo {
+    override suspend fun readUser(code: Int?): UserInfo {
         return when (method) {
             UserRepository.Method.SHARED_PREFERENCES -> sharedPreferences.readUser()
             UserRepository.Method.DATA_STORE_PREFERENCES -> dataStorePreferencesDataStore.readUser()
             UserRepository.Method.PROTO_DATA_STORE -> protoPreferencesDataStore.readUser()
             UserRepository.Method.ADVANCED_PROTO_DATA_STORE -> advancedProtoPreferencesDataStore.usersPreferencesFlow.map { users ->
-                index?.let { users[it] } ?: users.first()
+                code?.let { users.firstOrNull { it.code == code } } ?: users.first()
             }.first()
             UserRepository.Method.ROOM_DATABASE -> roomDatabase.users.map { users ->
-                index?.let { users[it] } ?: users.first()
+                code?.let { users.firstOrNull { it.code == code } } ?: users.first()
             }.first()
         }.apply {
             Log.d(TAG, "${method.name}: Read $this")
         }
-    }
-
-    override suspend fun writeUser(index: Int?, name: String?, email: String?, profession: Profession?) {
-        when (method) {
-            UserRepository.Method.SHARED_PREFERENCES -> {
-                with(sharedPreferences) {
-                    name?.let { writeName(it) }
-                    email?.let { writeEmail(it) }
-                    profession?.let { writeProfession(it) }
-                }
-            }
-            UserRepository.Method.DATA_STORE_PREFERENCES -> {
-                with(dataStorePreferencesDataStore) {
-                    name?.let { writeName(it) }
-                    email?.let { writeEmail(it) }
-                    profession?.let { writeProfession(it) }
-                }
-            }
-            UserRepository.Method.PROTO_DATA_STORE -> {
-                with(protoPreferencesDataStore) {
-                    name?.let { updateName(it) }
-                    email?.let { updateEmail(it) }
-                    profession?.let { updateProfession(it) }
-                }
-            }
-            UserRepository.Method.ADVANCED_PROTO_DATA_STORE -> {
-                with(advancedProtoPreferencesDataStore) {
-                    index?.let {
-                        editUser(
-                            it,
-                            name,
-                            email,
-                            profession
-                        )
-                    }
-                }
-            }
-            UserRepository.Method.ROOM_DATABASE -> {
-                index?.let {
-                    val user = readUser(it)
-                    roomDatabase.insertOrReplace(UserInfo(name ?: user.name, email ?: user.email, user.code, profession ?: user.profession))
-                }
-            }
-        }
-        Log.d(TAG, "${method.name}: Edit $index")
     }
 
     override suspend fun addUser(user: UserInfo) {
@@ -161,10 +116,10 @@ class UserRepositoryImpl(
             }
             UserRepository.Method.PROTO_DATA_STORE -> {
                 with(protoPreferencesDataStore) {
-                    updateName(user.name)
-                    updateEmail(user.email)
-                    updateCode(user.code)
-                    updateProfession(user.profession)
+                    writeName(user.name)
+                    writeEmail(user.email)
+                    writeCode(user.code)
+                    writeProfession(user.profession)
                 }
             }
             UserRepository.Method.ADVANCED_PROTO_DATA_STORE -> advancedProtoPreferencesDataStore.addUser(user)
@@ -173,14 +128,54 @@ class UserRepositoryImpl(
         Log.d(TAG, "${method.name}: Add $user")
     }
 
-    override suspend fun removeUser(index: Int) {
-        Log.d(TAG, "${method.name}: Remove $index")
+    override suspend fun editUser(code: Int?, name: String?, email: String?, profession: Profession?) {
         when (method) {
-            UserRepository.Method.ADVANCED_PROTO_DATA_STORE -> advancedProtoPreferencesDataStore.removeUser(index)
-            UserRepository.Method.ROOM_DATABASE -> {
-                val code = readUser(index).code
-                roomDatabase.removeUser(code)
+            UserRepository.Method.SHARED_PREFERENCES -> {
+                with(sharedPreferences) {
+                    name?.let { writeName(it) }
+                    email?.let { writeEmail(it) }
+                    profession?.let { writeProfession(it) }
+                }
             }
+            UserRepository.Method.DATA_STORE_PREFERENCES -> {
+                with(dataStorePreferencesDataStore) {
+                    name?.let { writeName(it) }
+                    email?.let { writeEmail(it) }
+                    profession?.let { writeProfession(it) }
+                }
+            }
+            UserRepository.Method.PROTO_DATA_STORE -> {
+                with(protoPreferencesDataStore) {
+                    name?.let { writeName(it) }
+                    email?.let { writeEmail(it) }
+                    profession?.let { writeProfession(it) }
+                }
+            }
+            UserRepository.Method.ADVANCED_PROTO_DATA_STORE -> {
+                code?.let {
+                    val user = readUser(it)
+                    advancedProtoPreferencesDataStore.replaceUser(
+                        UserInfo(name ?: user.name, email ?: user.email, user.code, profession ?: user.profession)
+                    )
+                }
+            }
+            UserRepository.Method.ROOM_DATABASE -> {
+                code?.let {
+                    val user = readUser(it)
+                    roomDatabase.insertOrReplace(
+                        UserInfo(name ?: user.name, email ?: user.email, user.code, profession ?: user.profession)
+                    )
+                }
+            }
+        }
+        Log.d(TAG, "${method.name}: Edit $code")
+    }
+
+    override suspend fun removeUser(code: Int) {
+        Log.d(TAG, "${method.name}: Remove $code")
+        when (method) {
+            UserRepository.Method.ADVANCED_PROTO_DATA_STORE -> advancedProtoPreferencesDataStore.removeUser(code)
+            UserRepository.Method.ROOM_DATABASE -> roomDatabase.removeUser(code)
             else -> clear()
         }
     }

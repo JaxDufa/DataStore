@@ -57,7 +57,7 @@ class MyApplication : Application() {
 
         viewModel { AddUserViewModel(get()) }
         viewModel { UserListViewModel(get()) }
-        viewModel { (userIndex: Int) -> EditUserViewModel(userIndex, get()) }
+        viewModel { (userCode: Int) -> EditUserViewModel(userCode, get()) }
     }
 
     override fun onCreate() {

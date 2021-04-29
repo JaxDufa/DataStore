@@ -30,18 +30,18 @@ class UserAdapter(private val onClickListener: (code: Int) -> Unit) : ListAdapte
 
     override fun onBindViewHolder(holder: UserViewHolder, position: Int) {
         val item = getItem(position)
-        holder.bind(position, item)
+        holder.bind(item)
     }
 
     inner class UserViewHolder(private val binding: LayoutUserItemBinding) : RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(position: Int, item: UserInfo) {
+        fun bind(item: UserInfo) {
             with(binding) {
                 textName.text = item.name
                 textEmail.text = item.email
 
                 root.setOnClickListener {
-                    onClickListener(position)
+                    onClickListener(item.code)
                 }
             }
         }

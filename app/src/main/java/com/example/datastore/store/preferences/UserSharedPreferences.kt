@@ -28,6 +28,9 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flattenMerge
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.CoroutineContext
 
 const val USER_SHARED_PREFERENCES_NAME = "shared_prefs"
 const val USER_EXTRA_SHARED_PREFERENCES_NAME = "extra_shared_prefs"
@@ -58,7 +61,7 @@ interface UserSharedPreferences {
 }
 
 @ExperimentalCoroutinesApi
-class UserSharedPreferencesImpl(context: Context) : UserSharedPreferences {
+class UserSharedPreferencesImpl(context: Context, private val coroutineContext: CoroutineContext = Dispatchers.IO) : UserSharedPreferences {
 
     object Keys {
 
@@ -76,7 +79,7 @@ class UserSharedPreferencesImpl(context: Context) : UserSharedPreferences {
 
     override val userFlow: Flow<UserInfo> = flowOf(createListener(), clearDataFlow)
         .flattenMerge()
-        .shareIn(CoroutineScope(Dispatchers.IO), SharingStarted.WhileSubscribed())
+        .shareIn(CoroutineScope(coroutineContext), SharingStarted.WhileSubscribed())
 
     // region - Read
     override suspend fun readUser(): UserInfo {
@@ -89,58 +92,74 @@ class UserSharedPreferencesImpl(context: Context) : UserSharedPreferences {
     }
 
     override suspend fun readName(): String {
-        return sharedPreferences.getString(Keys.NAME_KEY, "").orEmpty()
+        return withContext { sharedPreferences.getString(Keys.NAME_KEY, "").orEmpty() }
     }
 
     override suspend fun readEmail(): String {
-        return sharedPreferences.getString(Keys.EMAIL_KEY, "").orEmpty()
+        return withContext { sharedPreferences.getString(Keys.EMAIL_KEY, "").orEmpty() }
     }
 
     override suspend fun readCode(): Int {
-        return sharedPreferences.getInt(Keys.CODE_KEY, 0)
+        return withContext { sharedPreferences.getInt(Keys.CODE_KEY, 0) }
     }
 
     override suspend fun readProfession(): Profession {
-        return sharedPreferences.getString(Keys.PROFESSION_KEY, null)?.let {
-            Profession.valueOf(it)
-        } ?: Profession.OTHER
+        return withContext {
+            sharedPreferences.getString(Keys.PROFESSION_KEY, null)?.let {
+                Profession.valueOf(it)
+            } ?: Profession.OTHER
+        }
     }
     // endregion
 
     // region - Write
     override suspend fun writeName(name: String) {
-        sharedPreferences.edit {
-            putString(Keys.NAME_KEY, name)
+        withContext {
+            sharedPreferences.edit {
+                putString(Keys.NAME_KEY, name)
+            }
         }
     }
 
     override suspend fun writeEmail(email: String) {
-        sharedPreferences.edit {
-            putString(Keys.EMAIL_KEY, email)
+        withContext {
+            sharedPreferences.edit {
+                putString(Keys.EMAIL_KEY, email)
+            }
         }
     }
 
     override suspend fun writeCode(code: Int) {
-        sharedPreferences.edit {
-            putInt(Keys.CODE_KEY, code)
+        withContext {
+            sharedPreferences.edit {
+                putInt(Keys.CODE_KEY, code)
+            }
         }
     }
 
     override suspend fun writeProfession(profession: Profession) {
-        sharedPreferences.edit {
-            putString(Keys.PROFESSION_KEY, profession.name)
+        withContext {
+            sharedPreferences.edit {
+                putString(Keys.PROFESSION_KEY, profession.name)
+            }
         }
     }
     // endregion
 
     // region - Clear
     override suspend fun clear() {
-        sharedPreferences.edit {
-            clear()
+        withContext {
+            sharedPreferences.edit {
+                clear()
+            }
+            runBlocking {
+                clearDataFlow.emit(UserInfo.empty)
+            }
         }
-        clearDataFlow.emit(UserInfo.empty)
     }
     // endregion
+
+    private suspend fun <T> withContext(block: () -> T) = withContext(coroutineContext) { block() }
 
     private fun createListener() = callbackFlow {
         preferencesChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { sharedPreferences, _ ->

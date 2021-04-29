@@ -22,6 +22,7 @@ import com.example.datastore.store.Profession
 import com.example.datastore.store.UserInfo
 import com.example.datastore.store.preferences.USER_SHARED_PREFERENCES_NAME
 import com.example.datastore.store.preferences.UserSharedPreferencesImpl
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
@@ -36,17 +37,18 @@ interface UserProtoPreferencesDataStore {
 
     suspend fun readUser() : UserInfo
 
-    suspend fun updateName(name: String)
+    suspend fun writeName(name: String)
 
-    suspend fun updateEmail(email: String)
+    suspend fun writeEmail(email: String)
 
-    suspend fun updateCode(code: Int)
+    suspend fun writeCode(code: Int)
 
-    suspend fun updateProfession(profession: Profession)
+    suspend fun writeProfession(profession: Profession)
 
     suspend fun clear()
 }
 
+@ExperimentalCoroutinesApi
 class UserProtoPreferencesDataStoreImpl(private val context: Context) : UserProtoPreferencesDataStore {
 
     private val Context.dataStore: DataStore<UserPreferences> by dataStore(
@@ -96,7 +98,7 @@ class UserProtoPreferencesDataStoreImpl(private val context: Context) : UserProt
         return userFlow.first()
     }
 
-    override suspend fun updateName(name: String) {
+    override suspend fun writeName(name: String) {
         context.dataStore.updateData { preferences ->
             preferences.toBuilder()
                 .setName(name)
@@ -104,7 +106,7 @@ class UserProtoPreferencesDataStoreImpl(private val context: Context) : UserProt
         }
     }
 
-    override suspend fun updateEmail(email: String) {
+    override suspend fun writeEmail(email: String) {
         context.dataStore.updateData { preferences ->
             preferences.toBuilder()
                 .setEmail(email)
@@ -112,7 +114,7 @@ class UserProtoPreferencesDataStoreImpl(private val context: Context) : UserProt
         }
     }
 
-    override suspend fun updateCode(code: Int) {
+    override suspend fun writeCode(code: Int) {
         context.dataStore.updateData { preferences ->
             preferences.toBuilder()
                 .setCode(code)
@@ -120,7 +122,7 @@ class UserProtoPreferencesDataStoreImpl(private val context: Context) : UserProt
         }
     }
 
-    override suspend fun updateProfession(profession: Profession) {
+    override suspend fun writeProfession(profession: Profession) {
         context.dataStore.updateData { preferences ->
             preferences.toBuilder()
                 .setProfession(UserPreferences.Profession.valueOf(profession.name))

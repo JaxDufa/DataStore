@@ -25,7 +25,7 @@ import kotlinx.coroutines.launch
 import java.util.Locale
 
 class EditUserViewModel(
-    private val userIndex: Int,
+    private val userCode: Int,
     private val userRepository: UserRepository
 ) : ViewModel() {
 
@@ -49,14 +49,14 @@ class EditUserViewModel(
 
     fun loadUser() {
         viewModelScope.launch {
-            val user = userRepository.readUser(userIndex)
+            val user = userRepository.readUser(userCode)
             _state.postValue(State.Loaded(user))
         }
     }
 
     fun removeUser() {
         viewModelScope.launch {
-            userRepository.removeUser(userIndex)
+            userRepository.removeUser(userCode)
             _state.postValue(State.Completed)
         }
     }
@@ -65,7 +65,7 @@ class EditUserViewModel(
         val allDataIsValid = name.isNotBlank() && email.isNotBlank() && professionName.isNotBlank()
         if (allDataIsValid) {
             viewModelScope.launch {
-                userRepository.writeUser(userIndex, name, email, profession = Profession.valueOf(professionName.toUpperCase(Locale.getDefault())))
+                userRepository.editUser(userCode, name, email, profession = Profession.valueOf(professionName.toUpperCase(Locale.getDefault())))
                 _state.postValue(State.Completed)
             }
         }
