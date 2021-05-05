@@ -4,6 +4,10 @@ option java_package = "com.example.datastore";
 option java_multiple_files = true;
 
 message UserPreferences {
+
+  // Field numbers
+  reserved 5, 6, 7, 8 to 20;
+
   string name = 1;
   string email = 2;
   int32 code = 3;

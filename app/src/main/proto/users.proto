@@ -3,25 +3,27 @@ syntax = "proto3";
 option java_package = "com.example.datastore";
 option java_multiple_files = true;
 
-//import "../proto/user.proto";
+import "user.proto";
 
 message UsersPreferences {
-  message User {
-    string name = 1;
-    string email = 2;
-    int32 code = 3;
+//  message User {
+//    string name = 1;
+//    string email = 2;
+//    int32 code = 3;
+//
+//    enum Profession {
+//      UNSPECIFIED = 0;
+//      DEVELOPER = 1;
+//      ENGINEER = 2;
+//      HITMAN = 3;
+//      MEDIC = 4;
+//      WRITER = 5;
+//      OTHER = 6;
+//    }
+//    Profession profession = 4;
+//  }
+//  repeated User users = 1;
 
-    enum Profession {
-      UNSPECIFIED = 0;
-      DEVELOPER = 1;
-      ENGINEER = 2;
-      HITMAN = 3;
-      MEDIC = 4;
-      WRITER = 5;
-      OTHER = 6;
-    }
-    Profession profession = 4;
-  }
-  repeated User users = 1;
+  repeated UserPreferences users = 2;
 }
 

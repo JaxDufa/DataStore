@@ -61,18 +61,20 @@ dependencies {
   implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3"
   implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.4.3"
 
-  // DataStore - Typed
-  implementation "androidx.datastore:datastore:1.0.0-beta01"
-  // optional - RxJava2 support
-  implementation "androidx.datastore:datastore-rxjava2:1.0.0-beta01"
+  def data_store_version = "1.0.0-beta01"
 
   // DataStore - Preferences
-  implementation "androidx.datastore:datastore-preferences:1.0.0-beta01"
+  implementation "androidx.datastore:datastore-preferences:$data_store_version"
   // optional - RxJava2 support
-  implementation "androidx.datastore:datastore-preferences-rxjava2:1.0.0-beta01"
+  implementation "androidx.datastore:datastore-preferences-rxjava2:$data_store_version"
 
+  // DataStore - Typed
+  implementation "androidx.datastore:datastore:$data_store_version"
+  // optional - RxJava2 support
+  implementation "androidx.datastore:datastore-rxjava2:$data_store_version"
+  
   // DataStore - Proto
-  implementation  "androidx.datastore:datastore-core:1.0.0-beta01"
+  implementation  "androidx.datastore:datastore-core:$data_store_version"
 
   // Proto - Java Lite
   implementation  "com.google.protobuf:protobuf-javalite:3.10.0"
@@ -94,6 +96,7 @@ dependencies {
   implementation "org.koin:koin-androidx-viewmodel:2.2.2"
 }
 
+// Proto buf configuration
 protobuf {
   protoc {
     artifact = "com.google.protobuf:protoc:3.10.0"

@@ -132,7 +132,10 @@ class UserProtoPreferencesDataStoreImpl(private val context: Context) : UserProt
 
     override suspend fun clear() {
         context.dataStore.updateData { preferences ->
-            preferences.toBuilder().clear().build()
+            preferences
+                .toBuilder()
+                .clear()
+                .build()
         }
     }
 

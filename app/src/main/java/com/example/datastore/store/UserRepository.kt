@@ -56,7 +56,7 @@ class UserRepositoryImpl(
     private val roomDatabase: UserRoomRepository
 ) : UserRepository {
 
-    override var method: UserRepository.Method = UserRepository.Method.ADVANCED_PROTO_DATA_STORE
+    override var method: UserRepository.Method = UserRepository.Method.SHARED_PREFERENCES
 
     override suspend fun observeUsers(): Flow<List<UserInfo>> {
         return when (method) {

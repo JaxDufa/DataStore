@@ -20,6 +20,7 @@ import com.example.datastore.store.UserInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -77,6 +78,7 @@ class UserSharedPreferencesImpl(context: Context, private val coroutineContext: 
 
     private val clearDataFlow = MutableSharedFlow<UserInfo>()
 
+    @FlowPreview
     override val userFlow: Flow<UserInfo> = flowOf(createListener(), clearDataFlow)
         .flattenMerge()
         .shareIn(CoroutineScope(coroutineContext), SharingStarted.WhileSubscribed())

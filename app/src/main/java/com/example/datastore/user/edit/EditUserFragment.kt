@@ -21,7 +21,6 @@ import android.widget.AutoCompleteTextView
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.example.datastore.R
-import com.example.datastore.RELOAD_KEY
 import com.example.datastore.databinding.FragmentEditUserBinding
 import com.example.datastore.store.USER_KEY
 import com.google.android.material.textfield.TextInputLayout
@@ -64,7 +63,6 @@ class EditUserFragment : Fragment() {
                     }
                     is EditUserViewModel.State.Completed -> {
                         enableViews(false, inputTextName, inputTextEmail, inputTextProfession)
-                        findNavController().previousBackStackEntry?.savedStateHandle?.set(RELOAD_KEY, true)
                         findNavController().popBackStack()
                     }
                 }

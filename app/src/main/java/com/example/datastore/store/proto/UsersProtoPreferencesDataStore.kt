@@ -15,6 +15,7 @@ package com.example.datastore.store.proto
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
+import com.example.datastore.UserPreferences
 import com.example.datastore.UsersPreferences
 import com.example.datastore.store.Profession
 import com.example.datastore.store.UserInfo
@@ -62,11 +63,11 @@ class UsersProtoPreferencesDataStoreImpl(private val context: Context) : UsersPr
         context.dataStore.updateData { preferences ->
             preferences.toBuilder()
                 .addUsers(
-                    UsersPreferences.User.newBuilder().apply {
+                    UserPreferences.newBuilder().apply {
                         name = user.name
                         email = user.email
                         code = user.code
-                        profession = UsersPreferences.User.Profession.valueOf(user.profession.name)
+                        profession = UserPreferences.Profession.valueOf(user.profession.name)
                     }
                 )
                 .build()
@@ -79,11 +80,11 @@ class UsersProtoPreferencesDataStoreImpl(private val context: Context) : UsersPr
             preferences.toBuilder()
                 .setUsers(
                     index,
-                    UsersPreferences.User.newBuilder().apply {
+                    UserPreferences.newBuilder().apply {
                         this.name = user.name
                         this.email = user.email
                         this.code = user.code
-                        this.profession = UsersPreferences.User.Profession.valueOf(user.profession.name)
+                        this.profession = UserPreferences.Profession.valueOf(user.profession.name)
                     }
                 )
                 .build()
